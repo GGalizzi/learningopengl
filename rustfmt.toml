@@ -1,0 +1,8 @@
+merge_imports = true
+wrap_comments = true
+binop_separator = "Back"
+use_field_init_shorthand = true
+
+
+max_width = 62
+attr_fn_like_width = 100

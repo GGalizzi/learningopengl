@@ -1,0 +1,24 @@
+[package]
+name = "openglsdl"
+version = "0.1.0"
+authors = ["Galizzi Guillermo <galizzi.guillermo@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+image = "0.23.9"
+glam = "0.9.4"
+
+[dependencies.gl]
+git = "https://github.com/brendanzab/gl-rs/"
+
+[dependencies.sdl2]
+git = "https://github.com/rust-sdl2/rust-sdl2"
+
+default-features = false
+# features = ["ttf", "image"]
+
+[dependencies.bevy]
+git = "https://github.com/bevyengine/bevy"
+default-features = false
