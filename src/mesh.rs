@@ -2,6 +2,7 @@ use gl;
 
 mod vertex;
 
+use crate::shader::ShaderProgram;
 use vertex::VertexData;
 
 pub struct MeshBuilder {
@@ -47,6 +48,14 @@ impl Mesh {
     pub fn bind_buffer(&self) {
         unsafe {
             gl::BindVertexArray(self.vao);
+        }
+    }
+    
+    pub fn draw(&self) {
+        self.bind_buffer();
+        unsafe {
+            // TODO: The mesh should know if DrawArrays or Elements
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
     }
 }

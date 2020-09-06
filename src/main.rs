@@ -4,7 +4,9 @@ use sdl2::{self, event::Event};
 mod init;
 mod mesh;
 mod shader;
+mod draw;
 
+use draw::Draw;
 use mesh::Mesh;
 use shader::ShaderProgram;
 
@@ -49,12 +51,6 @@ fn main() -> Result<()> {
             gl::ClearColor(0.005, 0.0, 0.15, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
-        program.enable();
-        triangle.bind_buffer();
-
-        unsafe {
-            gl::DrawArrays(gl::TRIANGLES, 0, 3);
-        }
 
         for event in event_pump.poll_iter() {
             match event {
@@ -67,6 +63,12 @@ fn main() -> Result<()> {
                 _ => {}
             }
         }
+        
+        Draw::with(&program)
+            //.with_float
+            //.with_whatever_uniform
+            .mesh(&triangle);
+
         window.gl_swap_window();
         ::std::thread::sleep(::std::time::Duration::new(
             0,
