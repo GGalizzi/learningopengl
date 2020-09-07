@@ -1,7 +1,9 @@
 use gl;
 use glam::{Mat4, Vec3};
 use sdl2::{self, event::Event};
+use bevy::app::App;
 
+mod plugin;
 mod draw;
 mod init;
 mod mesh;
@@ -10,6 +12,8 @@ mod shader;
 use draw::Draw;
 use mesh::Mesh;
 use shader::ShaderProgram;
+
+use plugin::{GamePlugin, BasePlugin};
 
 type Result<T> = std::result::Result<T, String>;
 
@@ -33,6 +37,22 @@ fn main() -> Result<()> {
 
     let _ctx = window.gl_create_context()?;
     init::gl(&video);
+    
+    let mut bevy = std::mem::replace(
+        &mut App::build()
+            .add_plugin(BasePlugin)
+            .add_plugin(GamePlugin)
+            .add_resource(Mesh::build())
+            .app,
+        App::default(),
+    );
+    
+    bevy.startup_schedule.initialize(&mut bevy.resources);
+    bevy.startup_executor.run(
+        &mut bevy.startup_schedule,
+        &mut bevy.world,
+        &mut bevy.resources,
+    );
 
     let triangle = Mesh::build()
         .verts(&[
