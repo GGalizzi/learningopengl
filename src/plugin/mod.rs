@@ -92,7 +92,7 @@ fn rotation(
     let dt = time.delta_seconds;
     let speed = 120.0;
     let speed = dt * speed;
-    
+
     direction.rotate_on_x(input.mouse_y() * speed, dt);
     direction.rotate_on_y(input.mouse_x() * speed, dt);
 }

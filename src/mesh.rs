@@ -1,5 +1,6 @@
 use gl;
 
+mod constant;
 mod vertex;
 
 use vertex::VertexData;
@@ -7,12 +8,14 @@ use vertex::VertexData;
 pub struct MeshBuilder {
     vertices: Vec<f32>,
     indices: Option<Vec<u32>>,
+    texture: Option<Vec<f32>>,
 }
 
 impl MeshBuilder {
     pub fn new() -> MeshBuilder {
         MeshBuilder {
             vertices: Vec::new(),
+            texture: None,
             indices: None,
         }
     }
@@ -38,6 +41,7 @@ impl MeshBuilder {
         MeshBuilder {
             vertices,
             indices: None,
+            texture: None,
         }
     }
 
@@ -51,9 +55,18 @@ impl MeshBuilder {
         self
     }
 
+    pub fn texture_map(mut self, map: &[f32]) -> MeshBuilder {
+        self.texture = Some(map.to_owned());
+        self
+    }
+
     pub fn finalize(self) -> Mesh {
-        let verts =
-            VertexData::new(self.vertices, self.indices);
+        let verts = VertexData::new(
+            self.vertices,
+            self.texture,
+            self.indices,
+        );
+
         Mesh::new(verts)
     }
 }

@@ -1,16 +1,23 @@
 use gl::types::*;
 use std::ffi;
+#[derive(Debug)]
 pub struct VertexData {
     data: Vec<f32>,
+    texture: Option<Vec<f32>>,
     indices: Option<Vec<u32>>,
 }
 
 impl VertexData {
     pub fn new(
         data: Vec<f32>,
+        texture: Option<Vec<f32>>,
         indices: Option<Vec<u32>>,
     ) -> VertexData {
-        VertexData { data, indices }
+        VertexData {
+            data,
+            texture,
+            indices,
+        }
     }
 
     pub fn has_indices(&self) -> bool {
@@ -40,13 +47,17 @@ impl VertexData {
         self.indices.as_ref().unwrap().as_ptr() as *const _
     }
 
+    pub fn texture_ptr(&self) -> *const ffi::c_void {
+        self.texture.as_ref().unwrap().as_ptr() as *const _
+    }
+
     pub fn stride(&self) -> GLsizei {
         let mut elements_per_vertex = 3;
         /*
         if self.has_color_data() {
             elements_per_vertex += 3;
         }
-        if self.has_texture_data() {
+        if self.texture.is_some() {
             elements_per_vertex += 2;
         }
         */
@@ -58,13 +69,21 @@ impl VertexData {
             std::mem::size_of::<GLfloat>() as GLsizei
     }
 
+    pub fn stride_n(&self, n: i32) -> GLsizei {
+        n * std::mem::size_of::<GLfloat>() as GLsizei
+    }
+
     pub fn setup_buffers(&self) -> u32 {
         unsafe {
             let mut vao = 0;
+
+            gl::GenVertexArrays(1, &mut vao);
             let mut vbo = 0;
 
             gl::GenBuffers(1, &mut vbo);
+            gl::BindVertexArray(vao);
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+
             gl::BufferData(
                 gl::ARRAY_BUFFER,
                 self.size(),
@@ -86,6 +105,10 @@ impl VertexData {
 
             self.setup_position_attribute();
 
+            if self.texture.is_some() {
+                self.setup_texture_attribute();
+            }
+
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
 
@@ -103,7 +126,23 @@ impl VertexData {
                 self.stride(),
                 std::ptr::null(),
             );
+
             gl::EnableVertexAttribArray(0);
+        }
+    }
+
+    pub fn setup_texture_attribute(&self) {
+        unsafe {
+            gl::VertexAttribPointer(
+                1,
+                2,
+                gl::FLOAT,
+                gl::FALSE,
+                self.stride_n(2),
+                std::ptr::null(),
+            );
+
+            gl::EnableVertexAttribArray(1);
         }
     }
 }

@@ -10,11 +10,13 @@ mod input;
 mod mesh;
 mod plugin;
 mod shader;
+mod texture;
 
 use draw::Draw;
 use input::Input;
 use mesh::Mesh;
 use shader::ShaderProgram;
+use texture::Texture;
 
 use component::{Position, Rotation};
 use plugin::{BasePlugin, GamePlugin};
@@ -28,8 +30,7 @@ fn main() -> Result<()> {
     let sdl_context = sdl2::init()?;
     let video = sdl_context.video()?;
 
-    sdl_context.mouse().set_relative_mouse_mode(true);
-
+    init::gl(&video);
     let window = video
         .window(
             "bevy sdl opengl fun",
@@ -42,7 +43,9 @@ fn main() -> Result<()> {
         .map_err(|e| e.to_string())?;
 
     let _ctx = window.gl_create_context()?;
-    init::gl(&video);
+    init::load_gl(&video);
+
+    sdl_context.mouse().set_relative_mouse_mode(true);
 
     let mut bevy = std::mem::replace(
         &mut App::build()
@@ -60,6 +63,11 @@ fn main() -> Result<()> {
         &mut bevy.resources,
     );
 
+    let program = ShaderProgram::new(
+        "shaders/base.vert",
+        "shaders/basic.frag",
+    )?;
+
     let triangle = Mesh::build()
         .verts(&[
             -0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.0, 0.5, 0.0,
@@ -74,11 +82,16 @@ fn main() -> Result<()> {
             0.5, 0.5, 0.0, // Top right
         ])
         .indices(&[2, 0, 1, 2, 3, 1])
+        .texture_map(&[
+            0.0, 0.0, // Bottom left
+            1.0, 0.0, // Bottom right
+            0.0, 1.0, // Top left
+            1.0, 1.0, // Top right
+        ])
         .finalize();
-    let program = ShaderProgram::new(
-        "shaders/base.vert",
-        "shaders/basic.frag",
-    )?;
+
+    let wall_texture =
+        Texture::new("assets/awesomeface.png");
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -153,26 +166,31 @@ fn main() -> Result<()> {
             .iter()
         {
             /*view = Mat4::from_quat(dir.quat) *
-                Mat4::from_translation(pos.internal())
-                    .inverse();*/
-            view = Mat4::from_rotation_translation(dir.quat.conjugate(), pos.internal()).inverse();
+            Mat4::from_translation(pos.internal())
+                .inverse();*/
+            view = Mat4::from_rotation_translation(
+                dir.quat.conjugate(),
+                pos.internal(),
+            )
+            .inverse();
         }
 
         let mvp = projection * view * model;
 
         Draw::with(&program)
+            .with_texture_n(&wall_texture, 0)
             .with_matrix("mvp", &mvp)
-            .mesh(&plane)
+            //.mesh(&plane)
             .with_matrix(
                 "mvp",
                 &(projection *
                     view *
-                    (Mat4::from_translation(Vec3::new(
+                    Mat4::identity())
+                    /*(Mat4::from_translation(Vec3::new(
                         3.0, 0.0, 0.0,
-                    )) *
-                    Mat4::from_scale(Vec3::new(
+                    )) * Mat4::from_scale(Vec3::new(
                         9.0, 1.0, 1.0,
-                    )))),
+                    )))),*/
             )
             .mesh(&plane);
 

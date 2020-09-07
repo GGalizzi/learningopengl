@@ -2,7 +2,9 @@ use std::ffi;
 
 use glam::Mat4;
 
-use crate::{mesh::Mesh, shader::ShaderProgram};
+use crate::{
+    mesh::Mesh, shader::ShaderProgram, texture::Texture,
+};
 
 pub struct Draw<'a> {
     program: &'a ShaderProgram,
@@ -54,6 +56,18 @@ impl<'a> Draw<'a> {
 
     pub fn mesh(self, mesh: &Mesh) -> Draw<'a> {
         mesh.draw();
+        self
+    }
+
+    pub fn with_texture_n(
+        self,
+        texture: &Texture,
+        n: u32,
+    ) -> Draw<'a> {
+        unsafe {
+            gl::ActiveTexture(gl::TEXTURE0 + n);
+            gl::BindTexture(gl::TEXTURE_2D, texture.id)
+        }
         self
     }
 }
