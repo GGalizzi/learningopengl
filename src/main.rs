@@ -91,12 +91,13 @@ fn main() -> Result<()> {
         .finalize();
 
     let wall_texture =
-        Texture::new("assets/awesomeface.png");
+        Texture::new("assets/stone_wall_b.png");
 
     let mut event_pump = sdl_context.event_pump()?;
 
-    let model = Mat4::from_rotation_y(-90f32.to_radians()) *
-        Mat4::from_scale(Vec3::new(9.2, 1.0, 1.0));
+    let scale = Mat4::from_scale(Vec3::new(9.2, 1.0, 1.0));
+    let model =
+        Mat4::from_rotation_y(-90f32.to_radians()) * scale;
 
     // let view = Mat4::from_translation((0., 0.,
     // -3.).into());
@@ -118,7 +119,9 @@ fn main() -> Result<()> {
     'running: loop {
         unsafe {
             gl::ClearColor(0.005, 0.0, 0.15, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::Clear(
+                gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT,
+            );
         }
 
         // Event handling
@@ -177,28 +180,16 @@ fn main() -> Result<()> {
 
         let mvp = projection * view * model;
 
-        Draw::with(&program)
+        let d = Draw::with(&program)
             .with_texture_n(&wall_texture, 0)
             .with_matrix("mvp", &mvp)
-            //.mesh(&plane)
-            .with_matrix(
-                "mvp",
-                &(projection *
-                    view *
-                    Mat4::identity())
-                    /*(Mat4::from_translation(Vec3::new(
-                        3.0, 0.0, 0.0,
-                    )) * Mat4::from_scale(Vec3::new(
-                        9.0, 1.0, 1.0,
-                    )))),*/
-            )
+            .mesh(&plane);
+        let model =
+            Mat4::from_rotation_y(0f32.to_radians()) * scale;
+        d.with_matrix("mvp", &(projection * view * model))
             .mesh(&plane);
 
         window.gl_swap_window();
-        ::std::thread::sleep(::std::time::Duration::new(
-            0,
-            1_000_000_000u32 / 60,
-        ));
     }
 
     Ok(())

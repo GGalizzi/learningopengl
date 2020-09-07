@@ -3,19 +3,24 @@ use std::ffi;
 #[derive(Debug)]
 pub struct VertexData {
     data: Vec<f32>,
-    texture: Option<Vec<f32>>,
+    vertices_len: usize,
     indices: Option<Vec<u32>>,
 }
 
 impl VertexData {
     pub fn new(
-        data: Vec<f32>,
+        vertices: Vec<f32>,
         texture: Option<Vec<f32>>,
         indices: Option<Vec<u32>>,
     ) -> VertexData {
+        let vertices_len = vertices.len();
+        let mut data = vertices;
+        if let Some(mut texture) = texture {
+            data.append(&mut texture);
+        }
         VertexData {
             data,
-            texture,
+            vertices_len,
             indices,
         }
     }
@@ -47,8 +52,9 @@ impl VertexData {
         self.indices.as_ref().unwrap().as_ptr() as *const _
     }
 
-    pub fn texture_ptr(&self) -> *const ffi::c_void {
-        self.texture.as_ref().unwrap().as_ptr() as *const _
+    pub fn texture_offset(&self) -> *const ffi::c_void {
+        (self.vertices_len * std::mem::size_of::<GLfloat>())
+            as *const _
     }
 
     pub fn stride(&self) -> GLsizei {
@@ -104,10 +110,7 @@ impl VertexData {
             }
 
             self.setup_position_attribute();
-
-            if self.texture.is_some() {
-                self.setup_texture_attribute();
-            }
+            self.setup_texture_attribute();
 
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
@@ -139,7 +142,7 @@ impl VertexData {
                 gl::FLOAT,
                 gl::FALSE,
                 self.stride_n(2),
-                std::ptr::null(),
+                self.texture_offset(),
             );
 
             gl::EnableVertexAttribArray(1);

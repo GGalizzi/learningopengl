@@ -25,5 +25,7 @@ pub fn load_gl(video: &sdl2::VideoSubsystem) {
             crate::WINDOW_WIDTH as i32,
             crate::WINDOW_HEIGHT as i32,
         );
+
+        raw::Enable(gl::DEPTH_TEST);
     }
 }
