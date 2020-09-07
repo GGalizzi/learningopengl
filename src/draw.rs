@@ -2,8 +2,7 @@ use std::ffi;
 
 use glam::Mat4;
 
-use crate::mesh::Mesh;
-use crate::shader::ShaderProgram;
+use crate::{mesh::Mesh, shader::ShaderProgram};
 
 pub struct Draw<'a> {
     program: &'a ShaderProgram,

@@ -27,8 +27,8 @@ impl VertexData {
     }
 
     pub fn indices_size(&self) -> GLsizeiptr {
-        (self.indices.as_ref().unwrap().len()
-            * std::mem::size_of::<GLfloat>())
+        (self.indices.as_ref().unwrap().len() *
+            std::mem::size_of::<GLfloat>())
             as GLsizeiptr
     }
 
@@ -54,8 +54,8 @@ impl VertexData {
             "stride: {:?} * sizeof(float)",
             elements_per_vertex
         );
-        elements_per_vertex
-            * std::mem::size_of::<GLfloat>() as GLsizei
+        elements_per_vertex *
+            std::mem::size_of::<GLfloat>() as GLsizei
     }
 
     pub fn setup_buffers(&self) -> u32 {

@@ -1,19 +1,23 @@
+use bevy::app::App;
 use gl;
 use glam::{Mat4, Vec3};
 use sdl2::{self, event::Event};
-use bevy::app::App;
 
-mod plugin;
+mod component;
 mod draw;
 mod init;
+mod input;
 mod mesh;
+mod plugin;
 mod shader;
 
 use draw::Draw;
+use input::Input;
 use mesh::Mesh;
 use shader::ShaderProgram;
 
-use plugin::{GamePlugin, BasePlugin};
+use component::{Position, Rotation};
+use plugin::{BasePlugin, GamePlugin};
 
 type Result<T> = std::result::Result<T, String>;
 
@@ -23,6 +27,8 @@ pub const WINDOW_HEIGHT: f32 = 600.0;
 fn main() -> Result<()> {
     let sdl_context = sdl2::init()?;
     let video = sdl_context.video()?;
+
+    sdl_context.mouse().set_relative_mouse_mode(true);
 
     let window = video
         .window(
@@ -37,16 +43,16 @@ fn main() -> Result<()> {
 
     let _ctx = window.gl_create_context()?;
     init::gl(&video);
-    
+
     let mut bevy = std::mem::replace(
         &mut App::build()
             .add_plugin(BasePlugin)
             .add_plugin(GamePlugin)
-            .add_resource(Mesh::build())
+            .add_resource(Input::new())
             .app,
         App::default(),
     );
-    
+
     bevy.startup_schedule.initialize(&mut bevy.resources);
     bevy.startup_executor.run(
         &mut bevy.startup_schedule,
@@ -76,11 +82,11 @@ fn main() -> Result<()> {
 
     let mut event_pump = sdl_context.event_pump()?;
 
-    let model = 
-        Mat4::from_rotation_y(-25f32.to_radians()) *
-Mat4::from_scale(Vec3::new(9.2, 1.0, 1.0));
+    let model = Mat4::from_rotation_y(-90f32.to_radians()) *
+        Mat4::from_scale(Vec3::new(9.2, 1.0, 1.0));
 
-    let view = Mat4::from_translation((0., 0., -3.).into());
+    // let view = Mat4::from_translation((0., 0.,
+    // -3.).into());
 
     /*
     let view = glam::Mat4::look_at_rh(
@@ -96,29 +102,78 @@ Mat4::from_scale(Vec3::new(9.2, 1.0, 1.0));
         0.1,
         100.,
     );
-
-    let mvp = projection * view * model;
-
     'running: loop {
         unsafe {
             gl::ClearColor(0.005, 0.0, 0.15, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
 
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode:
-                        Some(sdl2::keyboard::Keycode::Escape),
-                    ..
-                } => break 'running,
-                _ => {}
+        // Event handling
+        {
+            let mut input =
+                bevy.resources.get_mut::<Input>().unwrap();
+            input.set_mouse(0, 0);
+            for event in event_pump.poll_iter() {
+                match event {
+                    Event::Quit { .. } |
+                    Event::KeyDown {
+                        keycode:
+                            Some(sdl2::keyboard::Keycode::Escape),
+                        ..
+                    } => break 'running,
+                    Event::KeyDown {
+                        keycode: Some(keycode),
+                        ..
+                    } => {
+                        input.press(keycode);
+                    }
+                    Event::KeyUp {
+                        keycode: Some(keycode),
+                        ..
+                    } => {
+                        input.release(keycode);
+                    }
+                    Event::MouseMotion {
+                        xrel, yrel, ..
+                    } => {
+                        input.set_mouse(xrel, yrel);
+                    }
+                    _ => {}
+                }
             }
         }
 
+        bevy.update();
+
+        let mut view = Mat4::identity();
+
+        for (pos, dir) in bevy
+            .world
+            .query::<(&Position, &Rotation)>()
+            .iter()
+        {
+            /*view = Mat4::from_quat(dir.quat) *
+                Mat4::from_translation(pos.internal())
+                    .inverse();*/
+            view = Mat4::from_rotation_translation(dir.quat.conjugate(), pos.internal()).inverse();
+        }
+
+        let mvp = projection * view * model;
+
         Draw::with(&program)
             .with_matrix("mvp", &mvp)
+            .mesh(&plane)
+            .with_matrix(
+                "mvp",
+                &(projection *
+                    view *
+                    (Mat4::from_translation(Vec3::new(
+                        3.0, 0.0, 0.0,
+                    )) *
+                    Mat4::from_scale(Vec3::new(
+                        9.0, 1.0, 1.0,
+                    )))),
+            )
             .mesh(&plane);
 
         window.gl_swap_window();
