@@ -1,10 +1,11 @@
 use gl;
+use glam::{Mat4, Vec3};
 use sdl2::{self, event::Event};
 
+mod draw;
 mod init;
 mod mesh;
 mod shader;
-mod draw;
 
 use draw::Draw;
 use mesh::Mesh;
@@ -39,12 +40,44 @@ fn main() -> Result<()> {
         ])
         .finalize();
 
+    let plane = Mesh::build()
+        .verts(&[
+            -0.5, -0.5, 0.0, // Bottom left
+            0.5, -0.5, 0.0, // Bottom right
+            -0.5, 0.5, 0.0, // Top left
+            0.5, 0.5, 0.0, // Top right
+        ])
+        .indices(&[2, 0, 1, 2, 3, 1])
+        .finalize();
     let program = ShaderProgram::new(
         "shaders/base.vert",
         "shaders/basic.frag",
     )?;
 
     let mut event_pump = sdl_context.event_pump()?;
+
+    let model = 
+        Mat4::from_rotation_y(-25f32.to_radians()) *
+Mat4::from_scale(Vec3::new(9.2, 1.0, 1.0));
+
+    let view = Mat4::from_translation((0., 0., -3.).into());
+
+    /*
+    let view = glam::Mat4::look_at_rh(
+        (0.0, 0.0, 3.0).into(),
+        (0.0, 0.0, 0.0).into(),
+        Vec3::new(0.0, 1.0, 0.0),
+    );
+    */
+
+    let projection = Mat4::perspective_rh(
+        45f32.to_radians(),
+        WINDOW_WIDTH / WINDOW_HEIGHT,
+        0.1,
+        100.,
+    );
+
+    let mvp = projection * view * model;
 
     'running: loop {
         unsafe {
@@ -54,8 +87,8 @@ fn main() -> Result<()> {
 
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } |
-                Event::KeyDown {
+                Event::Quit { .. }
+                | Event::KeyDown {
                     keycode:
                         Some(sdl2::keyboard::Keycode::Escape),
                     ..
@@ -63,11 +96,10 @@ fn main() -> Result<()> {
                 _ => {}
             }
         }
-        
+
         Draw::with(&program)
-            //.with_float
-            //.with_whatever_uniform
-            .mesh(&triangle);
+            .with_matrix("mvp", &mvp)
+            .mesh(&plane);
 
         window.gl_swap_window();
         ::std::thread::sleep(::std::time::Duration::new(

@@ -54,6 +54,10 @@ impl ShaderProgram {
         Ok(ShaderProgram { program_id })
     }
 
+    pub fn id(&self) -> u32 {
+        self.program_id
+    }
+
     pub fn enable(&self) {
         unsafe {
             gl::UseProgram(self.program_id);
