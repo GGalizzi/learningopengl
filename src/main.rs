@@ -90,6 +90,8 @@ fn main() -> Result<()> {
         ])
         .finalize();
 
+    let cube = Mesh::build().cube().finalize();
+
     let wall_texture =
         Texture::new("assets/stone_wall_b.png");
 
@@ -182,12 +184,15 @@ fn main() -> Result<()> {
 
         let d = Draw::with(&program)
             .with_texture_n(&wall_texture, 0)
-            .with_matrix("mvp", &mvp)
-            .mesh(&plane);
+            .with_matrix("mvp", &mvp);
+        //.mesh(&plane);
         let model =
             Mat4::from_rotation_y(0f32.to_radians()) * scale;
-        d.with_matrix("mvp", &(projection * view * model))
-            .mesh(&plane);
+        d.with_matrix(
+            "mvp",
+            &(projection * view * Mat4::identity()),
+        )
+        .mesh(&cube);
 
         window.gl_swap_window();
     }

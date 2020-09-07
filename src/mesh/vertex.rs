@@ -3,8 +3,8 @@ use std::ffi;
 #[derive(Debug)]
 pub struct VertexData {
     data: Vec<f32>,
-    vertices_len: usize,
     indices: Option<Vec<u32>>,
+    texture: Option<Vec<f32>>,
 }
 
 impl VertexData {
@@ -13,15 +13,23 @@ impl VertexData {
         texture: Option<Vec<f32>>,
         indices: Option<Vec<u32>>,
     ) -> VertexData {
-        let vertices_len = vertices.len();
-        let mut data = vertices;
-        if let Some(mut texture) = texture {
-            data.append(&mut texture);
-        }
+        let data = vertices.chunks_exact(3).enumerate().fold(
+            Vec::new(),
+            |mut acc, (i, vert)| {
+                acc.push(vert[0]);
+                acc.push(vert[1]);
+                acc.push(vert[2]);
+                if let Some(texture) = texture.as_ref() {
+                    acc.push(texture[i * 2]);
+                    acc.push(texture[i * 2 + 1]);
+                }
+                acc
+            },
+        );
         VertexData {
             data,
-            vertices_len,
             indices,
+            texture,
         }
     }
 
@@ -52,21 +60,28 @@ impl VertexData {
         self.indices.as_ref().unwrap().as_ptr() as *const _
     }
 
-    pub fn texture_offset(&self) -> *const ffi::c_void {
-        (self.vertices_len * std::mem::size_of::<GLfloat>())
-            as *const _
+    pub fn vertices_count(&self) -> i32 {
+        self.data
+            .chunks_exact(self.elements_per_vertex() as usize)
+            .len() as i32
     }
 
-    pub fn stride(&self) -> GLsizei {
+    fn elements_per_vertex(&self) -> i32 {
         let mut elements_per_vertex = 3;
         /*
         if self.has_color_data() {
             elements_per_vertex += 3;
         }
+
+        */
         if self.texture.is_some() {
             elements_per_vertex += 2;
         }
-        */
+        elements_per_vertex
+    }
+
+    pub fn stride(&self) -> GLsizei {
+        let elements_per_vertex = self.elements_per_vertex();
         println!(
             "stride: {:?} * sizeof(float)",
             elements_per_vertex
@@ -75,8 +90,8 @@ impl VertexData {
             std::mem::size_of::<GLfloat>() as GLsizei
     }
 
-    pub fn stride_n(&self, n: i32) -> GLsizei {
-        n * std::mem::size_of::<GLfloat>() as GLsizei
+    pub fn texture_offset(&self) -> *const ffi::c_void {
+        (3 * std::mem::size_of::<GLfloat>()) as *const _
     }
 
     pub fn setup_buffers(&self) -> u32 {
@@ -141,7 +156,7 @@ impl VertexData {
                 2,
                 gl::FLOAT,
                 gl::FALSE,
-                self.stride_n(2),
+                self.stride(),
                 self.texture_offset(),
             );
 

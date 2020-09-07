@@ -20,29 +20,9 @@ impl MeshBuilder {
         }
     }
 
-    pub fn cube() -> MeshBuilder {
-        let xs: [f32; 2] = [-0.5, 0.5];
-        let ys: [f32; 2] = [-0.5, 0.5];
-        let zs: [f32; 2] = [-0.5, 0.5];
-
-        let mut vertices: Vec<f32> = Vec::new();
-        for x in &xs {
-            for y in &ys {
-                for z in &zs {
-                    vertices.push(*x);
-                    vertices.push(*y);
-                    vertices.push(*z);
-                }
-            }
-        }
-
-        println!("{:?} verts {:?}", vertices, vertices.len());
-
-        MeshBuilder {
-            vertices,
-            indices: None,
-            texture: None,
-        }
+    pub fn cube(self) -> MeshBuilder {
+        self.verts(&constant::CUBE_VERTICES)
+            .texture_map(&constant::CUBE_TEXTURE_MAPPING)
     }
 
     pub fn verts(mut self, verts: &[f32]) -> MeshBuilder {
@@ -103,7 +83,11 @@ impl Mesh {
                     0 as *const _,
                 )
             } else {
-                gl::DrawArrays(gl::TRIANGLES, 0, 3);
+                gl::DrawArrays(
+                    gl::TRIANGLES,
+                    0,
+                    self.vertex_data.vertices_count(),
+                );
             }
         }
     }
