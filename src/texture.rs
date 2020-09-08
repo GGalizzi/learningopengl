@@ -61,6 +61,7 @@ impl Texture {
                 pixels.as_ptr() as *const u8 as *const c_void,
             );
             gl::GenerateMipmap(gl::TEXTURE_2D);
+            gl::BindTexture(gl::TEXTURE_2D, 0);
         }
 
         println!("loaded texture {:?}", id);

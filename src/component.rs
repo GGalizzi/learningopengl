@@ -64,12 +64,13 @@ impl Rotation {
     }
 
     pub fn rotate_on_y(&mut self, degrees: f32, s: f32) {
-        self.yaw += -degrees.to_radians();
+        self.yaw -= degrees.to_radians();
         self.update_quat(s);
     }
 
     pub fn rotate_on_x(&mut self, degrees: f32, s: f32) {
-        self.pitch += -degrees.to_radians();
+        self.pitch = (self.pitch - degrees.to_radians())
+            .clamp(-1.1, 1.1);
         self.update_quat(s);
     }
 }

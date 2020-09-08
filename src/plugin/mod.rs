@@ -41,7 +41,7 @@ impl Plugin for GamePlugin {
 
 fn spawn(mut commands: Commands) {
     commands.spawn((
-        Position::new(0.0, 0.0, 20.0),
+        Position::new(1.0, 0.0, 1.0),
         Rotation::new(),
     ));
 }
@@ -55,6 +55,14 @@ fn movement(
     let speed = 12.0;
     let dt = time.delta_seconds;
     let speed = dt * speed;
+
+    if input.is_pressed(Keycode::Space) {
+        *position = position.move_towards(
+            direction.quat.conjugate() *
+                Vec3::new(0.0, 1.0 * speed, 0.0),
+        );
+    }
+
     if input.is_pressed(Keycode::W) {
         *position = position.move_towards(
             direction.quat.conjugate() *

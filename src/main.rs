@@ -1,3 +1,5 @@
+#![feature(clamp)]
+
 use bevy::app::App;
 use gl;
 use glam::{Mat4, Vec3};
@@ -91,10 +93,23 @@ fn main() -> Result<()> {
         ])
         .finalize();
 
+    let ceiling = Mesh::build()
+        .verts(&[
+            0.0, 1.0, 0.0, 20.0, 1.0, 0.0, 0.0, 1.0, 20.0,
+            20.0, 1.0, 20.0,
+        ])
+        .indices(&[2, 0, 1, 2, 3, 1])
+        .texture_map(&[
+            0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0,
+        ])
+        .finalize();
     let cube = Mesh::build().cube().finalize();
 
     let wall_texture =
         Texture::new("assets/stone_wall_b.png");
+
+    let floor_texture =
+        Texture::new("assets/stone_floor_c.png");
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -198,9 +213,9 @@ fn main() -> Result<()> {
         .mesh(&cube);
         */
 
-        for x in 0..5 {
-            for y in 0..5 {
-                let t = &area.tiles[5 * y + x];
+        for x in 0..20 {
+            for y in 0..8 {
+                let t = &area.tiles[20 * y + x];
                 if t.is_wall() {
                     let mvp = projection *
                         view *
@@ -209,7 +224,28 @@ fn main() -> Result<()> {
                         ));
                     Draw::with(&program)
                         .with_matrix("mvp", &mvp)
+                        .with_texture_n(&wall_texture, 0)
                         .mesh(&cube);
+                } else {
+                    // Ceiling and floor?
+                    let d = Draw::with(&program)
+                        .with_texture_n(&floor_texture, 0);
+
+                    let mvp = projection *
+                        view *
+                        Mat4::from_translation(Vec3::new(
+                            x as f32, 1.0, y as f32,
+                        ));
+                    let d = d
+                        .with_matrix("mvp", &mvp)
+                        .mesh(&cube);
+
+                    let mvp = projection *
+                        view *
+                        Mat4::from_translation(Vec3::new(
+                            x as f32, -1.0, y as f32,
+                        ));
+                    d.with_matrix("mvp", &mvp).mesh(&cube);
                 }
             }
         }
