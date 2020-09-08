@@ -24,7 +24,7 @@ impl Position {
         direction: Vec3,
     ) -> Position {
         let mut vector = self.vector + direction;
-        *vector.y_mut() = 0.0;
+        // *vector.y_mut() = 0.0;
         Position::from_vector(vector)
     }
 }

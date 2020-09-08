@@ -213,39 +213,53 @@ fn main() -> Result<()> {
         .mesh(&cube);
         */
 
-        for x in 0..20 {
-            for y in 0..8 {
-                let t = &area.tiles[20 * y + x];
-                if t.is_wall() {
-                    let mvp = projection *
-                        view *
-                        Mat4::from_translation(Vec3::new(
-                            x as f32, 0.0, y as f32,
-                        ));
-                    Draw::with(&program)
-                        .with_matrix("mvp", &mvp)
-                        .with_texture_n(&wall_texture, 0)
-                        .mesh(&cube);
-                } else {
-                    // Ceiling and floor?
-                    let d = Draw::with(&program)
-                        .with_texture_n(&floor_texture, 0);
+        for z in 0..4 {
+            for x in 0..20 {
+                for y in 0..8 {
+                    let t = &area.tiles[(20 * y + x) + z * 20 * 8];
+                    if t.is_wall() {
+                        let mvp = projection *
+                            view *
+                            Mat4::from_translation(
+                                Vec3::new(
+                                    x as f32, z as f32, y as f32,
+                                ),
+                            );
+                        Draw::with(&program)
+                            .with_matrix("mvp", &mvp)
+                            .with_texture_n(&wall_texture, 0)
+                            .mesh(&cube);
+                    } else {
+                        /*
+                        // Ceiling and floor?
+                        let d = Draw::with(&program)
+                            .with_texture_n(
+                                &floor_texture,
+                                0,
+                            );
 
-                    let mvp = projection *
-                        view *
-                        Mat4::from_translation(Vec3::new(
-                            x as f32, 1.0, y as f32,
-                        ));
-                    let d = d
-                        .with_matrix("mvp", &mvp)
-                        .mesh(&cube);
+                        let mvp = projection *
+                            view *
+                            Mat4::from_translation(
+                                Vec3::new(
+                                    x as f32, 1.0, y as f32,
+                                ),
+                            );
+                        let d = d
+                            .with_matrix("mvp", &mvp)
+                            .mesh(&cube);
 
-                    let mvp = projection *
-                        view *
-                        Mat4::from_translation(Vec3::new(
-                            x as f32, -1.0, y as f32,
-                        ));
-                    d.with_matrix("mvp", &mvp).mesh(&cube);
+                        let mvp = projection *
+                            view *
+                            Mat4::from_translation(
+                                Vec3::new(
+                                    x as f32, -1.0, y as f32,
+                                ),
+                            );
+                        d.with_matrix("mvp", &mvp)
+                            .mesh(&cube);
+                            */
+                    }
                 }
             }
         }
