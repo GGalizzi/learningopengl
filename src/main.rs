@@ -55,6 +55,7 @@ fn main() -> Result<()> {
             .add_plugin(BasePlugin)
             .add_plugin(GamePlugin)
             .add_resource(Input::new())
+            .add_resource(map::Area::debug())
             .app,
         App::default(),
     );

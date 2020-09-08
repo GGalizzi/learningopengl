@@ -2,6 +2,8 @@ use bevy::{app::DefaultTaskPoolOptions, prelude::*};
 use glam::{Mat4, Vec4};
 use sdl2::keyboard::Keycode;
 
+use crate::map;
+
 use crate::{
     component::{Position, Rotation},
     input::Input,
@@ -43,6 +45,7 @@ fn spawn(mut commands: Commands) {
 fn movement(
     time: Res<Time>,
     input: Res<Input>,
+    area: Res<map::Area>,
     direction: &Rotation,
     mut position: Mut<Position>,
 ) {
@@ -50,40 +53,44 @@ fn movement(
     let dt = time.delta_seconds;
     let speed = dt * speed;
 
+    let mut new_position = (*position).clone();
     if input.is_pressed(Keycode::Space) {
-        *position = position.move_towards(
+        new_position = position.move_towards(
             direction.quat.conjugate() *
                 Vec3::new(0.0, 1.0 * speed, 0.0),
         );
     }
 
     if input.is_pressed(Keycode::W) {
-        *position = position.move_towards(
+        new_position = position.move_towards(
             direction.quat.conjugate() *
                 Vec3::new(0.0, 0.0, -1.0 * speed),
         );
     }
 
     if input.is_pressed(Keycode::S) {
-        *position = position.move_towards(
+        new_position = position.move_towards(
             direction.quat.conjugate() *
                 Vec3::new(0.0, 0.0, 1.0 * speed),
         );
     }
 
     if input.is_pressed(Keycode::A) {
-        *position = position.move_towards(
+        new_position = position.move_towards(
             direction.quat.conjugate() *
                 Vec3::new(-1.0 * speed, 0.0, 0.0),
         );
     }
 
     if input.is_pressed(Keycode::D) {
-        *position = position.move_towards(
+        new_position = position.move_towards(
             direction.quat.conjugate() *
                 Vec3::new(1.0 * speed, 0.0, 0.0),
         );
     }
+    
+    if area.blocks_at(new_position.internal()) { return; }
+    *position = new_position;
 }
 
 fn rotation(

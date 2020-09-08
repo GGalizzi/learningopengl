@@ -1,3 +1,5 @@
+use glam::Vec3;
+
 const STR_MAP: [&'static str; 4] = [
     r#"
     #################### 
@@ -79,5 +81,16 @@ impl Area {
             );
         }
         Area { tiles }
+    }
+    
+    pub fn blocks_at(&self, point: Vec3) -> bool {
+        let x = point.x().round() as usize;
+        let y = point.z().round() as usize;
+        let z = point.y().round() as usize;
+        
+        if let Some(tile) = self.tiles.get((20 * y + x) + z * 20 * 8) {
+            return tile.is_wall();
+        }
+        false
     }
 }

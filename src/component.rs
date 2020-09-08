@@ -1,5 +1,6 @@
 use glam::{Quat, Vec3};
 use std::ops;
+#[derive(Clone)]
 pub struct Position {
     vector: Vec3,
 }
