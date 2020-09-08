@@ -7,6 +7,7 @@ mod component;
 mod draw;
 mod init;
 mod input;
+mod map;
 mod mesh;
 mod plugin;
 mod shader;
@@ -118,6 +119,8 @@ fn main() -> Result<()> {
         0.1,
         100.,
     );
+
+    let area = map::Area::debug();
     'running: loop {
         unsafe {
             gl::ClearColor(0.005, 0.0, 0.15, 1.0);
@@ -181,7 +184,7 @@ fn main() -> Result<()> {
         }
 
         let mvp = projection * view * model;
-
+        /*
         let d = Draw::with(&program)
             .with_texture_n(&wall_texture, 0)
             .with_matrix("mvp", &mvp);
@@ -193,6 +196,23 @@ fn main() -> Result<()> {
             &(projection * view * Mat4::identity()),
         )
         .mesh(&cube);
+        */
+
+        for x in 0..5 {
+            for y in 0..5 {
+                let t = &area.tiles[5 * y + x];
+                if t.is_wall() {
+                    let mvp = projection *
+                        view *
+                        Mat4::from_translation(Vec3::new(
+                            x as f32, 0.0, y as f32,
+                        ));
+                    Draw::with(&program)
+                        .with_matrix("mvp", &mvp)
+                        .mesh(&cube);
+                }
+            }
+        }
 
         window.gl_swap_window();
     }
