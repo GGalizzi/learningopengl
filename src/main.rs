@@ -2,9 +2,10 @@
 
 use bevy::app::App;
 use gl;
-use glam::{Mat4, Vec3};
+use vek::{Mat4, Vec3};
 use sdl2::{self, event::Event};
 
+mod util;
 mod component;
 mod draw;
 mod init;
@@ -114,9 +115,9 @@ fn main() -> Result<()> {
 
     let mut event_pump = sdl_context.event_pump()?;
 
-    let scale = Mat4::from_scale(Vec3::new(9.2, 1.0, 1.0));
+    let scale = Mat4::scaling_3d(Vec3::new(9.2, 1.0, 1.0));
     let model =
-        Mat4::from_rotation_y(-90f32.to_radians()) * scale;
+        Mat4::rotation_y(-90f32.to_radians()) * scale;
 
     // let view = Mat4::from_translation((0., 0.,
     // -3.).into());
@@ -129,12 +130,15 @@ fn main() -> Result<()> {
     );
     */
 
-    let projection = Mat4::perspective_rh(
+    let projection = Mat4::perspective_fov_lh_no(45f32.to_radians(), WINDOW_WIDTH, WINDOW_HEIGHT, 0.1, 100.);
+    /*
+    let projection = Mat4::perspective_rh_zo(
         45f32.to_radians(),
         WINDOW_WIDTH / WINDOW_HEIGHT,
         0.1,
         100.,
     );
+    */
 
     let area = map::Area::debug();
     'running: loop {
@@ -189,14 +193,14 @@ fn main() -> Result<()> {
             .query::<(&Position, &Rotation)>()
             .iter()
         {
-            /*view = Mat4::from_quat(dir.quat) *
-            Mat4::from_translation(pos.internal())
-                .inverse();*/
+            /*
             view = Mat4::from_rotation_translation(
                 dir.quat.conjugate(),
                 pos.internal(),
             )
             .inverse();
+            */
+            view = Mat4::from(dir.quat).translated_3d(pos.internal());
         }
 
         let mvp = projection * view * model;
@@ -222,7 +226,7 @@ fn main() -> Result<()> {
                     if t.is_wall() {
                         let mvp = projection *
                             view *
-                            Mat4::from_translation(
+                            Mat4::translation_3d(
                                 Vec3::new(
                                     x as f32, z as f32,
                                     y as f32,

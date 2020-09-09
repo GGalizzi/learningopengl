@@ -1,8 +1,11 @@
-use glam::{Quat, Vec3};
+use vek::{Quaternion, Vec3};
 use std::ops;
+
+use crate::util::quat_from_ypr;
+
 #[derive(Clone)]
 pub struct Position {
-    vector: Vec3,
+    vector: Vec3<f32>,
 }
 
 impl Position {
@@ -12,25 +15,25 @@ impl Position {
         }
     }
 
-    pub fn from_vector(vector: Vec3) -> Position {
+    pub fn from_vector(vector: Vec3<f32>) -> Position {
         Position { vector }
     }
 
-    pub fn mul(&mut self, vec: Vec3) {
+    pub fn mul(&mut self, vec: Vec3<f32>) {
         self.vector = Vec3::new(
-            vec.x() * self.vector.x(),
-            vec.y() * self.vector.y(),
-            vec.z() * self.vector.z(),
+            vec.x * self.vector.x,
+            vec.y * self.vector.y,
+            vec.z * self.vector.z,
         );
     }
 
-    pub fn internal(&self) -> Vec3 {
+    pub fn internal(&self) -> Vec3<f32> {
         self.vector.clone()
     }
 
     pub fn move_towards(
         &mut self,
-        direction: Vec3,
+        direction: Vec3<f32>,
     ) -> Position {
         let mut vector = self.vector + direction;
         // *vector.y_mut() = 0.0;
@@ -48,7 +51,7 @@ impl ops::Mul<f32> for Position {
 }
 
 pub struct Rotation {
-    pub quat: Quat,
+    pub quat: Quaternion<f32>,
     yaw: f32,
     pitch: f32,
 }
@@ -56,18 +59,18 @@ pub struct Rotation {
 impl Rotation {
     pub fn new() -> Rotation {
         Rotation {
-            quat: Quat::from_rotation_ypr(0.0, 0.0, 0.0),
+            quat: quat_from_ypr(0.0, 0.0, 0.0),
             yaw: 0.0,
             pitch: 0.0,
         }
     }
 
     pub fn update_quat(&mut self, s: f32) {
-        self.quat = self.quat.slerp(
-            Quat::from_rotation_ypr(
+        self.quat = Quaternion::slerp(
+            self.quat,
+            quat_from_ypr(
                 self.yaw, self.pitch, 0.0,
-            )
-            .conjugate(),
+            ),
             5.25 * s,
         );
     }
@@ -97,7 +100,7 @@ impl BoundingBox {
 
 #[derive(Debug, Clone)]
 pub struct Velocity {
-    vec: Vec3,
+    vec: Vec3<f32>,
 }
 
 impl Velocity {
@@ -107,31 +110,31 @@ impl Velocity {
         }
     }
 
-    pub fn from(vec: Vec3) -> Velocity {
+    pub fn from(vec: Vec3<f32>) -> Velocity {
         Velocity { vec }
     }
 
-    pub fn internal(&self) -> Vec3 {
+    pub fn internal(&self) -> Vec3<f32> {
         self.vec
     }
 
     pub fn apply_drag(&mut self, n: f32) {
         let mut vec = self.vec * n;
-        if vec.length() < 0.05 {
+        if vec.magnitude() < 0.05 {
             vec = Vec3::zero();
         }
         self.vec = vec;
     }
 
     pub fn normalize(&mut self) {
-        self.vec = self.vec.normalize();
+        self.vec = self.vec.normalized();
     }
 }
 
-impl ops::Add<Vec3> for &Velocity {
+impl ops::Add<Vec3<f32>> for &Velocity {
     type Output = Velocity;
 
-    fn add(self, rhs: Vec3) -> Self::Output {
+    fn add(self, rhs: Vec3<f32>) -> Self::Output {
         let mut nv = Velocity::new();
         nv.vec = self.vec + rhs;
         nv

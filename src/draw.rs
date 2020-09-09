@@ -1,6 +1,6 @@
 use std::ffi;
 
-use glam::Mat4;
+use vek::Mat4;
 
 use crate::{
     mesh::Mesh, shader::ShaderProgram, texture::Texture,
@@ -38,7 +38,7 @@ impl<'a> Draw<'a> {
     pub fn with_matrix(
         self,
         uniform: &str,
-        matrix: &Mat4,
+        matrix: &Mat4<f32>,
     ) -> Draw<'a> {
         let loc = self.get_uniform_location(uniform);
 
@@ -46,8 +46,8 @@ impl<'a> Draw<'a> {
             gl::UniformMatrix4fv(
                 loc,
                 1,
-                gl::FALSE,
-                matrix.as_ref().as_ptr(),
+                matrix.gl_should_transpose() as _,
+                matrix.as_col_ptr(),
             );
         }
 

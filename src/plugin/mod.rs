@@ -1,6 +1,6 @@
-use bevy::{app::DefaultTaskPoolOptions, prelude::*};
-use glam::{Mat4, Vec4};
+use bevy::{app::DefaultTaskPoolOptions, prelude::{Plugin, AppBuilder, Commands, Mut, Res, Time, Query, IntoForEachSystem, IntoQuerySystem}};
 use sdl2::keyboard::Keycode;
+use vek::*;
 
 use crate::map;
 
@@ -53,8 +53,8 @@ fn momentum(
 ) {
     let dt = time.delta_seconds;
 
-    let mut applied_vel = Vec3::zero();
-    let conj = rotation.quat.normalize().conjugate();
+    let mut applied_vel: Vec3<f32> = Vec3::zero();
+    let conj = rotation.quat.normalized();
 
     if input.is_pressed(Keycode::Space) {
         applied_vel += conj * Vec3::new(0.0, 1.0, 0.0);
@@ -78,8 +78,8 @@ fn momentum(
 
     let transition_speed = 6.0;
     let max_speed = 0.10;
-    if applied_vel.length().abs() >= 0.01 {
-        applied_vel = applied_vel.normalize();
+    if applied_vel.magnitude().abs() >= 0.01 {
+        applied_vel = applied_vel.normalized();
     }
 
     applied_vel *= max_speed;
@@ -109,17 +109,19 @@ fn movement(
         let movement_vector = velocity.internal();
 
         let new_position = position.move_towards(movement_vector);
-        if !area.blocks_at(new_position.internal()) {
             *position = new_position;
+            /*
+        if !area.blocks_at(new_position.internal()) {
         }
+        */
     }
 }
 
-fn mul_each(vec: Vec3, other: Vec3) -> Vec3 {
+fn mul_each(vec: Vec3<f32>, other: Vec3<f32>) -> Vec3<f32> {
     Vec3::new(
-        vec.x() * other.x(),
-        vec.y() * other.y(),
-        vec.z() * other.z(),
+        vec.x * other.x,
+        vec.y * other.y,
+        vec.z * other.z,
     )
 }
 

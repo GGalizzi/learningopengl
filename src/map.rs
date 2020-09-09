@@ -1,4 +1,4 @@
-use glam::Vec3;
+use vek::Vec3;
 
 use crate::component::BoundingBox;
 
@@ -85,11 +85,11 @@ impl Area {
         Area { tiles }
     }
 
-    pub fn blocks_at(&self, point: Vec3) -> bool {
+    pub fn blocks_at(&self, point: Vec3<f32>) -> bool {
         println!("point to check {:?}", point);
-        let x = point.x().round() as usize;
-        let y = point.z().round() as usize;
-        let z = point.y().round() as usize;
+        let x = point.x.round() as usize;
+        let y = point.z.round() as usize;
+        let z = point.y.round() as usize;
         println!("rounded to check {:?}", (x,y,z));
 
         if let Some(tile) =
@@ -102,20 +102,20 @@ impl Area {
 
     pub fn blocks_around(
         &self,
-        point: Vec3,
+        point: Vec3<f32>,
         bound: &BoundingBox,
     ) -> bool {
-        let px = point.x() + bound.size;
-        let x = point.x();
-        let mx = point.x() - bound.size;
+        let px = point.x + bound.size;
+        let x = point.x;
+        let mx = point.x - bound.size;
 
-        let py = point.y() + bound.height;
-        let y = point.y();
-        let my = point.y() - bound.height;
+        let py = point.y + bound.height;
+        let y = point.y;
+        let my = point.y - bound.height;
 
-        let pz = point.z() + bound.size;
-        let z = point.z();
-        let mz = point.z() - bound.size;
+        let pz = point.z + bound.size;
+        let z = point.z;
+        let mz = point.z - bound.size;
 
         return self.blocks_at((x, y, pz).into()) ||
             self.blocks_at((px, y, z).into()) ||

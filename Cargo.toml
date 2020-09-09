@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 image = "0.23.9"
-glam = "0.9.4"
+vek = "0.12.0"
 
 [dependencies.gl]
 git = "https://github.com/brendanzab/gl-rs/"
