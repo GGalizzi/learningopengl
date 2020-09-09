@@ -130,7 +130,7 @@ fn main() -> Result<()> {
     );
     */
 
-    let projection = Mat4::perspective_fov_lh_no(45f32.to_radians(), WINDOW_WIDTH, WINDOW_HEIGHT, 0.1, 100.);
+    let projection = Mat4::perspective_fov_rh_no(45f32.to_radians(), WINDOW_WIDTH, WINDOW_HEIGHT, 0.1, 100.);
     /*
     let projection = Mat4::perspective_rh_zo(
         45f32.to_radians(),
@@ -200,7 +200,7 @@ fn main() -> Result<()> {
             )
             .inverse();
             */
-            view = Mat4::from(dir.quat).translated_3d(pos.internal());
+            view = Mat4::from(dir.quat.conjugate()).translated_3d(pos.internal()).inverted();
         }
 
         let mvp = projection * view * model;

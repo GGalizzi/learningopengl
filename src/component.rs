@@ -70,7 +70,7 @@ impl Rotation {
             self.quat,
             quat_from_ypr(
                 self.yaw, self.pitch, 0.0,
-            ),
+            ).conjugate(),
             5.25 * s,
         );
     }

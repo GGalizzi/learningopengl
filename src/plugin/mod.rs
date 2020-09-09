@@ -54,18 +54,18 @@ fn momentum(
     let dt = time.delta_seconds;
 
     let mut applied_vel: Vec3<f32> = Vec3::zero();
-    let conj = rotation.quat.normalized();
+    let conj = rotation.quat.conjugate();
 
     if input.is_pressed(Keycode::Space) {
         applied_vel += conj * Vec3::new(0.0, 1.0, 0.0);
     }
 
     if input.is_pressed(Keycode::W) {
-        applied_vel += conj * Vec3::new(0.0, 0.0, -1.0);
+        applied_vel += conj * Vec3::forward_rh();
     }
 
     if input.is_pressed(Keycode::S) {
-        applied_vel += conj * Vec3::new(0.0, 0.0, 1.0);
+        applied_vel += conj * Vec3::back_rh();
     }
 
     if input.is_pressed(Keycode::A) {
