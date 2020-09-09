@@ -1,5 +1,7 @@
 use glam::Vec3;
 
+use crate::component::BoundingBox;
+
 const STR_MAP: [&'static str; 4] = [
     r#"
     #################### 
@@ -82,15 +84,44 @@ impl Area {
         }
         Area { tiles }
     }
-    
+
     pub fn blocks_at(&self, point: Vec3) -> bool {
+        println!("point to check {:?}", point);
         let x = point.x().round() as usize;
         let y = point.z().round() as usize;
         let z = point.y().round() as usize;
-        
-        if let Some(tile) = self.tiles.get((20 * y + x) + z * 20 * 8) {
+        println!("rounded to check {:?}", (x,y,z));
+
+        if let Some(tile) =
+            self.tiles.get((20 * y + x) + z * 20 * 8)
+        {
             return tile.is_wall();
         }
         false
+    }
+
+    pub fn blocks_around(
+        &self,
+        point: Vec3,
+        bound: &BoundingBox,
+    ) -> bool {
+        let px = point.x() + bound.size;
+        let x = point.x();
+        let mx = point.x() - bound.size;
+
+        let py = point.y() + bound.height;
+        let y = point.y();
+        let my = point.y() - bound.height;
+
+        let pz = point.z() + bound.size;
+        let z = point.z();
+        let mz = point.z() - bound.size;
+
+        return self.blocks_at((x, y, pz).into()) ||
+            self.blocks_at((px, y, z).into()) ||
+            self.blocks_at((x, y, mz).into()) ||
+            self.blocks_at((mx, y, z).into()) ||
+            self.blocks_at((x, py, z).into()) ||
+            self.blocks_at((x, my, z).into());
     }
 }

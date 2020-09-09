@@ -16,6 +16,14 @@ impl Position {
         Position { vector }
     }
 
+    pub fn mul(&mut self, vec: Vec3) {
+        self.vector = Vec3::new(
+            vec.x() * self.vector.x(),
+            vec.y() * self.vector.y(),
+            vec.z() * self.vector.z(),
+        );
+    }
+
     pub fn internal(&self) -> Vec3 {
         self.vector.clone()
     }
@@ -73,5 +81,59 @@ impl Rotation {
         self.pitch = (self.pitch - degrees.to_radians())
             .clamp(-1.1, 1.1);
         self.update_quat(s);
+    }
+}
+
+pub struct BoundingBox {
+    pub size: f32,
+    pub height: f32,
+}
+
+impl BoundingBox {
+    pub fn new(size: f32, height: f32) -> BoundingBox {
+        BoundingBox { size, height }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Velocity {
+    vec: Vec3,
+}
+
+impl Velocity {
+    pub fn new() -> Velocity {
+        Velocity {
+            vec: Vec3::new(0.0, 0.0, 0.0),
+        }
+    }
+
+    pub fn from(vec: Vec3) -> Velocity {
+        Velocity { vec }
+    }
+
+    pub fn internal(&self) -> Vec3 {
+        self.vec
+    }
+
+    pub fn apply_drag(&mut self, n: f32) {
+        let mut vec = self.vec * n;
+        if vec.length() < 0.05 {
+            vec = Vec3::zero();
+        }
+        self.vec = vec;
+    }
+
+    pub fn normalize(&mut self) {
+        self.vec = self.vec.normalize();
+    }
+}
+
+impl ops::Add<Vec3> for &Velocity {
+    type Output = Velocity;
+
+    fn add(self, rhs: Vec3) -> Self::Output {
+        let mut nv = Velocity::new();
+        nv.vec = self.vec + rhs;
+        nv
     }
 }

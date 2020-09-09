@@ -5,7 +5,7 @@ use sdl2::keyboard::Keycode;
 use crate::map;
 
 use crate::{
-    component::{Position, Rotation},
+    component::{BoundingBox, Position, Rotation, Velocity},
     input::Input,
 };
 pub struct BasePlugin;
@@ -30,6 +30,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system(spawn.system())
+            .add_system(momentum.system())
             .add_system(movement.system())
             .add_system(rotation.system());
     }
@@ -38,59 +39,88 @@ impl Plugin for GamePlugin {
 fn spawn(mut commands: Commands) {
     commands.spawn((
         Position::new(1.0, 0.0, 1.0),
+        Velocity::new(),
         Rotation::new(),
+        BoundingBox::new(0.15, 0.1),
     ));
+}
+
+fn momentum(
+    time: Res<Time>,
+    input: Res<Input>,
+    rotation: &Rotation,
+    mut velocity: Mut<Velocity>,
+) {
+    let dt = time.delta_seconds;
+
+    let mut applied_vel = Vec3::zero();
+    let conj = rotation.quat.normalize().conjugate();
+
+    if input.is_pressed(Keycode::Space) {
+        applied_vel += conj * Vec3::new(0.0, 1.0, 0.0);
+    }
+
+    if input.is_pressed(Keycode::W) {
+        applied_vel += conj * Vec3::new(0.0, 0.0, -1.0);
+    }
+
+    if input.is_pressed(Keycode::S) {
+        applied_vel += conj * Vec3::new(0.0, 0.0, 1.0);
+    }
+
+    if input.is_pressed(Keycode::A) {
+        applied_vel += conj * Vec3::new(-1.0, 0.0, 0.0);
+    }
+
+    if input.is_pressed(Keycode::D) {
+        applied_vel += conj * Vec3::new(1.0, 0.0, 0.0);
+    }
+
+    let transition_speed = 6.0;
+    let max_speed = 0.10;
+    if applied_vel.length().abs() >= 0.01 {
+        applied_vel = applied_vel.normalize();
+    }
+
+    applied_vel *= max_speed;
+    *velocity = Velocity::from(
+        velocity.internal() * (1.0 - dt * transition_speed) +
+            applied_vel * (dt * transition_speed),
+    );
 }
 
 fn movement(
     time: Res<Time>,
-    input: Res<Input>,
     area: Res<map::Area>,
-    direction: &Rotation,
-    mut position: Mut<Position>,
+    mut query: Query<(
+        &Rotation,
+        &Velocity,
+        Mut<Position>,
+        Option<&BoundingBox>,
+    )>,
 ) {
     let speed = 12.0;
     let dt = time.delta_seconds;
     let speed = dt * speed;
 
-    let mut new_position = (*position).clone();
-    if input.is_pressed(Keycode::Space) {
-        new_position = position.move_towards(
-            direction.quat.conjugate() *
-                Vec3::new(0.0, 1.0 * speed, 0.0),
-        );
-    }
+    for (direction, velocity, mut position, bound_box) in
+        &mut query.iter()
+    {
+        let movement_vector = velocity.internal();
 
-    if input.is_pressed(Keycode::W) {
-        new_position = position.move_towards(
-            direction.quat.conjugate() *
-                Vec3::new(0.0, 0.0, -1.0 * speed),
-        );
+        let new_position = position.move_towards(movement_vector);
+        if !area.blocks_at(new_position.internal()) {
+            *position = new_position;
+        }
     }
+}
 
-    if input.is_pressed(Keycode::S) {
-        new_position = position.move_towards(
-            direction.quat.conjugate() *
-                Vec3::new(0.0, 0.0, 1.0 * speed),
-        );
-    }
-
-    if input.is_pressed(Keycode::A) {
-        new_position = position.move_towards(
-            direction.quat.conjugate() *
-                Vec3::new(-1.0 * speed, 0.0, 0.0),
-        );
-    }
-
-    if input.is_pressed(Keycode::D) {
-        new_position = position.move_towards(
-            direction.quat.conjugate() *
-                Vec3::new(1.0 * speed, 0.0, 0.0),
-        );
-    }
-    
-    if area.blocks_at(new_position.internal()) { return; }
-    *position = new_position;
+fn mul_each(vec: Vec3, other: Vec3) -> Vec3 {
+    Vec3::new(
+        vec.x() * other.x(),
+        vec.y() * other.y(),
+        vec.z() * other.z(),
+    )
 }
 
 fn rotation(
