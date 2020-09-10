@@ -1,5 +1,5 @@
-use vek::{Quaternion, Vec3};
 use std::ops;
+use vek::{Quaternion, Vec3};
 
 use crate::util::quat_from_ypr;
 
@@ -68,9 +68,8 @@ impl Rotation {
     pub fn update_quat(&mut self, s: f32) {
         self.quat = Quaternion::slerp(
             self.quat,
-            quat_from_ypr(
-                self.yaw, self.pitch, 0.0,
-            ).conjugate(),
+            quat_from_ypr(self.yaw, self.pitch, 0.0)
+                .conjugate(),
             5.25 * s,
         );
     }

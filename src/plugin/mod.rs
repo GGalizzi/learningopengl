@@ -1,4 +1,10 @@
-use bevy::{app::DefaultTaskPoolOptions, prelude::{Plugin, AppBuilder, Commands, Mut, Res, Time, Query, IntoForEachSystem, IntoQuerySystem}};
+use bevy::{
+    app::DefaultTaskPoolOptions,
+    prelude::{
+        AppBuilder, Commands, IntoForEachSystem,
+        IntoQuerySystem, Mut, Plugin, Query, Res, Time,
+    },
+};
 use sdl2::keyboard::Keycode;
 use vek::*;
 
@@ -108,12 +114,11 @@ fn movement(
     {
         let movement_vector = velocity.internal();
 
-        let new_position = position.move_towards(movement_vector);
+        let new_position =
+            position.move_towards(movement_vector);
+        if !area.blocks_around(new_position.internal()) {
             *position = new_position;
-            /*
-        if !area.blocks_at(new_position.internal()) {
         }
-        */
     }
 }
 

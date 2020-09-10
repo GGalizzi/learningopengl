@@ -2,10 +2,9 @@
 
 use bevy::app::App;
 use gl;
-use vek::{Mat4, Vec3};
 use sdl2::{self, event::Event};
+use vek::{Mat4, Vec3};
 
-mod util;
 mod component;
 mod draw;
 mod init;
@@ -15,6 +14,7 @@ mod mesh;
 mod plugin;
 mod shader;
 mod texture;
+mod util;
 
 use draw::Draw;
 use input::Input;
@@ -116,8 +116,7 @@ fn main() -> Result<()> {
     let mut event_pump = sdl_context.event_pump()?;
 
     let scale = Mat4::scaling_3d(Vec3::new(9.2, 1.0, 1.0));
-    let model =
-        Mat4::rotation_y(-90f32.to_radians()) * scale;
+    let model = Mat4::rotation_y(-90f32.to_radians()) * scale;
 
     // let view = Mat4::from_translation((0., 0.,
     // -3.).into());
@@ -130,7 +129,13 @@ fn main() -> Result<()> {
     );
     */
 
-    let projection = Mat4::perspective_fov_rh_no(45f32.to_radians(), WINDOW_WIDTH, WINDOW_HEIGHT, 0.1, 100.);
+    let projection = Mat4::perspective_fov_rh_no(
+        45f32.to_radians(),
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        0.1,
+        100.,
+    );
     /*
     let projection = Mat4::perspective_rh_zo(
         45f32.to_radians(),
@@ -200,7 +205,9 @@ fn main() -> Result<()> {
             )
             .inverse();
             */
-            view = Mat4::from(dir.quat.conjugate()).translated_3d(pos.internal()).inverted();
+            view = Mat4::from(dir.quat.conjugate())
+                .translated_3d(pos.internal())
+                .inverted();
         }
 
         let mvp = projection * view * model;
