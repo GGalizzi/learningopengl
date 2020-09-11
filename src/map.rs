@@ -5,30 +5,30 @@ use crate::component::BoundingBox;
 const STR_MAP: [&'static str; 4] = [
     r#"
     #################### 
-    #...#..............#
-    #................###
-    #...#..........#####
-    ######...........###
-    #######............#
-    ####...............#
+    ####################
+    ####################
+    ####################
+    ####################
+    ####################
+    ####################
+    ####################
+"#,
+    r#"
+    ###############.#### 
+    #.......######..####
+    #..............#####
+    #..............#####
+    #.......#####.######
+    #.......####..##.###
+    #.......###.......##
     ####################
 "#,
     r#"
     #################### 
-    ####################
-    ####################
-    ####################
-    ####################
-    ################.###
-    ###########.......##
-    ####################
-"#,
-    r#"
-    #################### 
-    ####..............##
-    #######...........##
-    #######...........##
-    #######............#
+    #.................##
+    #.................##
+    #.................##
+    #..................#
     #######............#
     ####################
     ####################
@@ -85,30 +85,38 @@ impl Area {
         Area { tiles }
     }
 
-    pub fn blocks_at(&self, point: Vec3<i32>) -> bool {
+    pub fn blocks_at(
+        &self,
+        point: Vec3<i32>,
+    ) -> Option<Vec3<i32>> {
         if point.x < 0 || point.y < 0 || point.z < 0 {
-            return true;
+            return None;
         }
         if let Some(tile) = self.tiles.get(
             (20 * point.z as usize + point.x as usize) +
                 point.y as usize * 20 * 8,
         ) {
-            return tile.is_wall();
+            if tile.is_wall() {
+                return Some(point);
+            }
         }
-        false
+        None
     }
 
-    pub fn blocks_around(&self, point: Vec3<f32>) -> bool {
+    pub fn blocks_around(
+        &self,
+        point: Vec3<f32>,
+    ) -> Option<(Aabb<f32>, Aabb<f32>)> {
         let aabb = Aabb {
             min: Vec3::new(
-                point.x - 0.2,
-                point.y - 0.15,
-                point.z - 0.2,
+                point.x - 0.35,
+                point.y - 0.45,
+                point.z - 0.35,
             ),
             max: Vec3::new(
-                point.x + 0.2,
+                point.x + 0.35,
                 point.y + 0.15,
-                point.z + 0.2,
+                point.z + 0.35,
             ),
         };
 
@@ -119,13 +127,28 @@ impl Area {
                 for mz in area_rect.min.z..=area_rect.max.z {
                     let thisblocks =
                         self.blocks_at((mx, my, mz).into());
-                    if thisblocks {
-                        return true;
+                    if let Some(block) = thisblocks {
+                        let block_aabb = Aabb {
+                            min: Vec3::new(
+                                mx as f32 - 0.5, my as f32 - 0.5,
+                                mz as f32 - 0.5,
+                            ),
+                            max: Vec3::new(
+                                mx as f32 + 0.5,
+                                my as f32 + 0.5,
+                                mz as f32 + 0.5,
+                            ),
+                        };
+                        if aabb.collides_with_aabb(
+                            block_aabb,
+                        ) {
+                            return Some((block_aabb, aabb));
+                        }
                     }
                 }
             }
         }
 
-        false
+        None
     }
 }

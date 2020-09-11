@@ -19,6 +19,10 @@ impl Position {
         Position { vector }
     }
 
+    pub fn add(&mut self, rh: Vec3<f32>) {
+        self.vector += rh;
+    }
+
     pub fn mul(&mut self, vec: Vec3<f32>) {
         self.vector = Vec3::new(
             vec.x * self.vector.x,
@@ -36,7 +40,7 @@ impl Position {
         direction: Vec3<f32>,
     ) -> Position {
         let mut vector = self.vector + direction;
-        // *vector.y_mut() = 0.0;
+        // vector.y = vector.y.round();
         Position::from_vector(vector)
     }
 }
@@ -123,6 +127,10 @@ impl Velocity {
             vec = Vec3::zero();
         }
         self.vec = vec;
+    }
+
+    pub fn apply_force(&mut self, dir: Vec3<f32>) {
+        self.vec = self.vec + dir;
     }
 
     pub fn normalize(&mut self) {

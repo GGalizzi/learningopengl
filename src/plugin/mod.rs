@@ -13,6 +13,7 @@ use crate::map;
 use crate::{
     component::{BoundingBox, Position, Rotation, Velocity},
     input::Input,
+    util::nznormalize,
 };
 pub struct BasePlugin;
 
@@ -36,6 +37,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system(spawn.system())
+            .add_system(gravity.system())
             .add_system(momentum.system())
             .add_system(movement.system())
             .add_system(rotation.system());
@@ -44,11 +46,16 @@ impl Plugin for GamePlugin {
 
 fn spawn(mut commands: Commands) {
     commands.spawn((
-        Position::new(1.0, 0.0, 1.0),
+        Position::new(1.5, 1.6, 1.5),
         Velocity::new(),
         Rotation::new(),
         BoundingBox::new(0.15, 0.1),
     ));
+}
+
+fn gravity(time: Res<Time>, mut velocity: Mut<Velocity>) {
+     velocity.apply_force(Vec3::down() *
+     time.delta_seconds);
 }
 
 fn momentum(
@@ -100,7 +107,7 @@ fn movement(
     area: Res<map::Area>,
     mut query: Query<(
         &Rotation,
-        &Velocity,
+        Mut<Velocity>,
         Mut<Position>,
         Option<&BoundingBox>,
     )>,
@@ -109,16 +116,44 @@ fn movement(
     let dt = time.delta_seconds;
     let speed = dt * speed;
 
-    for (direction, velocity, mut position, bound_box) in
+    for (direction, mut velocity, mut position, bound_box) in
         &mut query.iter()
     {
         let movement_vector = velocity.internal();
 
-        let new_position =
-            position.move_towards(movement_vector);
-        if !area.blocks_around(new_position.internal()) {
-            *position = new_position;
+        let mut new_position =
+            position.move_towards(movement_vector).internal();
+        
+        const MAX_ATTEMPTS: usize = 16;
+        let mut attempts = 0;
+        while let Some((collidee, collider)) =
+            area.blocks_around(new_position)
+        {
+            if attempts == MAX_ATTEMPTS { break; }
+            let dir =
+                collider.collision_vector_with_aabb(collidee);
+            let max_axis =
+                dir.map(|e| e.abs()).reduce_partial_min();
+            let dir = -dir.map(|e| {
+                if e.abs().to_bits() == max_axis.to_bits() {
+                    e
+                } else {
+                    0.0
+                }
+            });
+            *velocity = Velocity::from(velocity.internal().map2(dir, |e,d| {
+                if d * e.signum() < 0.0 { 0.0 } else { e }
+            }));
+            if attempts == 0 {
+                new_position = new_position + dir;
+            } else {
+                new_position += dir;
+            }
+            attempts += 1;
+            println!("a{:?} {:?}", attempts, dir);
         }
+        *position = Position::from_vector(new_position);
+   
     }
 }
 
