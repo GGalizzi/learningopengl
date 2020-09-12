@@ -17,7 +17,7 @@ const STR_MAP: [&'static str; 4] = [
     ###############.#### 
     #.......######..####
     #..............#####
-    #..............#####
+    #.............<#####
     #.......#####.######
     #.......####..##.###
     #.......###.......##
@@ -45,16 +45,18 @@ const STR_MAP: [&'static str; 4] = [
     "#,
 ];
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum Tile {
     Floor,
     Wall,
+    StairUp,
 }
 
 impl Tile {
     fn from_char(ch: char) -> Tile {
         match ch {
             '#' => Tile::Wall,
+            '<' => Tile::StairUp,
             _ => Tile::Floor,
         }
     }
@@ -88,7 +90,7 @@ impl Area {
     pub fn blocks_at(
         &self,
         point: Vec3<i32>,
-    ) -> Option<Vec3<i32>> {
+    ) -> Option<Tile> {
         if point.x < 0 || point.y < 0 || point.z < 0 {
             return None;
         }
@@ -96,8 +98,12 @@ impl Area {
             (20 * point.z as usize + point.x as usize) +
                 point.y as usize * 20 * 8,
         ) {
-            if tile.is_wall() {
-                return Some(point);
+            if match *tile {
+                Tile::Wall => true,
+                Tile::StairUp => true,
+                _ => false,
+            } {
+                return Some(*tile);
             }
         }
         None
@@ -127,7 +133,7 @@ impl Area {
                 for mz in area_rect.min.z..=area_rect.max.z {
                     let thisblocks =
                         self.blocks_at((mx, my, mz).into());
-                    if let Some(block) = thisblocks {
+                    if let Some(tile) = thisblocks {
                         let block_aabb = Aabb {
                             min: Vec3::new(
                                 mx as f32 - 0.5,

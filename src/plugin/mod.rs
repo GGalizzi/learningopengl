@@ -105,7 +105,6 @@ fn momentum(
 fn movement(
     time: Res<Time>,
     area: Res<map::Area>,
-    mut colvec: ResMut<Vec<Vec3<i32>>>,
     mut query: Query<(
         &Rotation,
         Mut<Velocity>,
@@ -127,14 +126,12 @@ fn movement(
 
         const MAX_ATTEMPTS: usize = 16;
         let mut attempts = 0;
-        while let Some((collidee, collider, p)) =
+        while let Some((collidee, collider, _)) =
             area.blocks_around(new_position)
         {
             if attempts == MAX_ATTEMPTS {
                 break;
             }
-
-            colvec.push(p);
 
             let pen =
                 collider.collision_vector_with_aabb(collidee);
@@ -149,7 +146,7 @@ fn movement(
             });
 
             if (dir.x.abs() > 0.0 || dir.z.abs() > 0.0) &&
-                pen.y.abs() < 0.05
+                pen.y.abs() < 0.25
             {
                 dir = Vec3::new(-dir.x, 0.0, -dir.z);
             } else {

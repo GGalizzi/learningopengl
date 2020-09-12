@@ -51,13 +51,11 @@ fn main() -> Result<()> {
 
     sdl_context.mouse().set_relative_mouse_mode(true);
 
-    let colvec: Vec<Vec3<i32>> = Vec::new();
     let mut bevy = std::mem::replace(
         &mut App::build()
             .add_plugin(BasePlugin)
             .add_plugin(GamePlugin)
             .add_resource(Input::new())
-            .add_resource(colvec)
             .add_resource(map::Area::debug())
             .app,
         App::default(),
@@ -227,56 +225,31 @@ fn main() -> Result<()> {
         .mesh(&cube);
         */
 
-        let colvec =
-            bevy.resources.get::<Vec<Vec3<i32>>>().unwrap();
+        use map::Tile;
         for z in 0..4 {
             for x in 0..20 {
                 for y in 0..8 {
                     let t = &area.tiles
                         [(20 * y + x) + z * 20 * 8];
-                    if t.is_wall() {
-                        let mvp = projection *
-                            view *
-                            Mat4::translation_3d(
-                                Vec3::new(
-                                    x as f32, z as f32,
-                                    y as f32,
-                                ),
-                            );
-                        Draw::with(&program)
-                            .with_matrix("mvp", &mvp)
-                            .with_texture_n(&wall_texture, 0)
-                            .mesh(&cube);
-                    } else {
-                        /*
-                        // Ceiling and floor?
-                        let d = Draw::with(&program)
-                            .with_texture_n(
-                                &floor_texture,
-                                0,
-                            );
-
-                        let mvp = projection *
-                            view *
-                            Mat4::from_translation(
-                                Vec3::new(
-                                    x as f32, 1.0, y as f32,
-                                ),
-                            );
-                        let d = d
-                            .with_matrix("mvp", &mvp)
-                            .mesh(&cube);
-
-                        let mvp = projection *
-                            view *
-                            Mat4::from_translation(
-                                Vec3::new(
-                                    x as f32, -1.0, y as f32,
-                                ),
-                            );
-                        d.with_matrix("mvp", &mvp)
-                            .mesh(&cube);
-                            */
+                    match *t {
+                        Tile::Wall => {
+                            let mvp = projection *
+                                view *
+                                Mat4::translation_3d(
+                                    Vec3::new(
+                                        x as f32, z as f32,
+                                        y as f32,
+                                    ),
+                                );
+                            Draw::with(&program)
+                                .with_matrix("mvp", &mvp)
+                                .with_texture_n(
+                                    &wall_texture,
+                                    0,
+                                )
+                                .mesh(&cube);
+                        }
+                        _ => {}
                     }
                 }
             }
