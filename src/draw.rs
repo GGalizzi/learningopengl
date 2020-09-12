@@ -54,6 +54,20 @@ impl<'a> Draw<'a> {
         self
     }
 
+    pub fn with_bool(
+        self,
+        uniform: &str,
+        val: bool,
+    ) -> Draw<'a> {
+        let loc = self.get_uniform_location(uniform);
+
+        unsafe {
+            gl::Uniform1uiv(loc, 1, &(val as u32));
+        }
+
+        self
+    }
+
     pub fn mesh(self, mesh: &Mesh) -> Draw<'a> {
         mesh.draw();
         self

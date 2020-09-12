@@ -51,11 +51,13 @@ fn main() -> Result<()> {
 
     sdl_context.mouse().set_relative_mouse_mode(true);
 
+    let colvec: Vec<Vec3<i32>> = Vec::new();
     let mut bevy = std::mem::replace(
         &mut App::build()
             .add_plugin(BasePlugin)
             .add_plugin(GamePlugin)
             .add_resource(Input::new())
+            .add_resource(colvec)
             .add_resource(map::Area::debug())
             .app,
         App::default(),
@@ -225,6 +227,8 @@ fn main() -> Result<()> {
         .mesh(&cube);
         */
 
+        let colvec =
+            bevy.resources.get::<Vec<Vec3<i32>>>().unwrap();
         for z in 0..4 {
             for x in 0..20 {
                 for y in 0..8 {

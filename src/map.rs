@@ -106,17 +106,17 @@ impl Area {
     pub fn blocks_around(
         &self,
         point: Vec3<f32>,
-    ) -> Option<(Aabb<f32>, Aabb<f32>)> {
+    ) -> Option<(Aabb<f32>, Aabb<f32>, Vec3<i32>)> {
         let aabb = Aabb {
             min: Vec3::new(
-                point.x - 0.35,
-                point.y - 0.45,
-                point.z - 0.35,
+                point.x - 0.25,
+                point.y - 0.35,
+                point.z - 0.25,
             ),
             max: Vec3::new(
-                point.x + 0.35,
+                point.x + 0.25,
                 point.y + 0.15,
-                point.z + 0.35,
+                point.z + 0.25,
             ),
         };
 
@@ -130,7 +130,8 @@ impl Area {
                     if let Some(block) = thisblocks {
                         let block_aabb = Aabb {
                             min: Vec3::new(
-                                mx as f32 - 0.5, my as f32 - 0.5,
+                                mx as f32 - 0.5,
+                                my as f32 - 0.5,
                                 mz as f32 - 0.5,
                             ),
                             max: Vec3::new(
@@ -139,10 +140,13 @@ impl Area {
                                 mz as f32 + 0.5,
                             ),
                         };
-                        if aabb.collides_with_aabb(
-                            block_aabb,
-                        ) {
-                            return Some((block_aabb, aabb));
+                        if aabb.collides_with_aabb(block_aabb)
+                        {
+                            return Some((
+                                block_aabb,
+                                aabb,
+                                Vec3::new(mx, my, mz),
+                            ));
                         }
                     }
                 }

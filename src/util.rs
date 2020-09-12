@@ -29,3 +29,9 @@ pub fn max_dim(vec: Vec3<f32>) -> Vec3<f32> {
         return Vec3::new(0.0, 0.0, vec.z);
     }
 }
+
+pub fn is_horizontal_penetration(
+    penetration_vector: Vec3<f32>,
+) -> bool {
+    penetration_vector.y == 0.0
+}

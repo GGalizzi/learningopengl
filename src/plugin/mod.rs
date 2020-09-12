@@ -2,7 +2,8 @@ use bevy::{
     app::DefaultTaskPoolOptions,
     prelude::{
         AppBuilder, Commands, IntoForEachSystem,
-        IntoQuerySystem, Mut, Plugin, Query, Res, Time,
+        IntoQuerySystem, Mut, Plugin, Query, Res, ResMut,
+        Time,
     },
 };
 use sdl2::keyboard::Keycode;
@@ -13,7 +14,7 @@ use crate::map;
 use crate::{
     component::{BoundingBox, Position, Rotation, Velocity},
     input::Input,
-    util::nznormalize,
+    util,
 };
 pub struct BasePlugin;
 
@@ -46,7 +47,7 @@ impl Plugin for GamePlugin {
 
 fn spawn(mut commands: Commands) {
     commands.spawn((
-        Position::new(1.5, 1.6, 1.5),
+        Position::new(1.5, 6.6, 1.5),
         Velocity::new(),
         Rotation::new(),
         BoundingBox::new(0.15, 0.1),
@@ -54,8 +55,7 @@ fn spawn(mut commands: Commands) {
 }
 
 fn gravity(time: Res<Time>, mut velocity: Mut<Velocity>) {
-     velocity.apply_force(Vec3::down() *
-     time.delta_seconds);
+    velocity.apply_force(Vec3::down() * time.delta_seconds);
 }
 
 fn momentum(
@@ -105,6 +105,7 @@ fn momentum(
 fn movement(
     time: Res<Time>,
     area: Res<map::Area>,
+    mut colvec: ResMut<Vec<Vec3<i32>>>,
     mut query: Query<(
         &Rotation,
         Mut<Velocity>,
@@ -123,37 +124,54 @@ fn movement(
 
         let mut new_position =
             position.move_towards(movement_vector).internal();
-        
+
         const MAX_ATTEMPTS: usize = 16;
         let mut attempts = 0;
-        while let Some((collidee, collider)) =
+        while let Some((collidee, collider, p)) =
             area.blocks_around(new_position)
         {
-            if attempts == MAX_ATTEMPTS { break; }
-            let dir =
+            if attempts == MAX_ATTEMPTS {
+                break;
+            }
+
+            colvec.push(p);
+
+            let pen =
                 collider.collision_vector_with_aabb(collidee);
             let max_axis =
-                dir.map(|e| e.abs()).reduce_partial_min();
-            let dir = -dir.map(|e| {
+                pen.map(|e| e.abs()).reduce_partial_min();
+            let mut dir = -pen.map(|e| {
                 if e.abs().to_bits() == max_axis.to_bits() {
                     e
                 } else {
                     0.0
                 }
             });
-            *velocity = Velocity::from(velocity.internal().map2(dir, |e,d| {
-                if d * e.signum() < 0.0 { 0.0 } else { e }
-            }));
+
+            if (dir.x.abs() > 0.0 || dir.z.abs() > 0.0) &&
+                pen.y.abs() < 0.05
+            {
+                dir = Vec3::new(-dir.x, 0.0, -dir.z);
+            } else {
+                *velocity = Velocity::from(
+                    velocity.internal().map2(dir, |e, d| {
+                        if d * e.signum() < 0.0 {
+                            0.0
+                        } else {
+                            e
+                        }
+                    }),
+                );
+            }
             if attempts == 0 {
                 new_position = new_position + dir;
             } else {
                 new_position += dir;
             }
+
             attempts += 1;
-            println!("a{:?} {:?}", attempts, dir);
         }
         *position = Position::from_vector(new_position);
-   
     }
 }
 
