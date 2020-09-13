@@ -105,7 +105,8 @@ fn main() -> Result<()> {
             0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0,
         ])
         .finalize();
-    let cube = Mesh::build().cube().finalize();
+    let mut cube =
+        Mesh::build().cube().instanced().finalize();
 
     let wall_texture =
         Texture::new("assets/stone_wall_b.png");
@@ -115,8 +116,8 @@ fn main() -> Result<()> {
 
     let mut event_pump = sdl_context.event_pump()?;
 
-    let scale = Mat4::scaling_3d(Vec3::new(9.2, 1.0, 1.0));
-    let model = Mat4::rotation_y(-90f32.to_radians()) * scale;
+    let model =
+        Mat4::translation_3d(Vec3::new(0.0, 0.0, 0.0));
 
     // let view = Mat4::from_translation((0., 0.,
     // -3.).into());
@@ -210,6 +211,7 @@ fn main() -> Result<()> {
                 .inverted();
         }
 
+        let mv = projection * view;
         let mvp = projection * view * model;
         /*
         let d = Draw::with(&program)
@@ -225,6 +227,7 @@ fn main() -> Result<()> {
         .mesh(&cube);
         */
 
+        /*
         use map::Tile;
         for z in 0..4 {
             for x in 0..20 {
@@ -253,7 +256,31 @@ fn main() -> Result<()> {
                     }
                 }
             }
+        }*/
+
+        cube.instance_reset();
+        for y in 0..4 {
+            for x in 0..20 {
+                for z in 0..8 {
+                    if area
+                        .blocks_at(Vec3::new(x, y, z))
+                        .is_some()
+                    {
+                        let model =
+                            Mat4::translation_3d(Vec3::new(
+                                x as f32, y as f32, z as f32,
+                            ));
+                        cube.next_instance(model);
+                    }
+                }
+            }
         }
+
+        cube.bind_instance_data();
+        Draw::with(&program)
+            .with_matrix("mvp", &mv)
+            .with_texture_n(&wall_texture, 0)
+            .mesh(&cube);
 
         window.gl_swap_window();
     }

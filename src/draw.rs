@@ -6,6 +6,7 @@ use crate::{
     mesh::Mesh, shader::ShaderProgram, texture::Texture,
 };
 
+#[derive(Clone, Copy)]
 pub struct Draw<'a> {
     program: &'a ShaderProgram,
 }

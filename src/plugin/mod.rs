@@ -38,7 +38,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system(spawn.system())
-            .add_system(gravity.system())
+            //.add_system(gravity.system())
             .add_system(momentum.system())
             .add_system(movement.system())
             .add_system(rotation.system());
@@ -47,7 +47,7 @@ impl Plugin for GamePlugin {
 
 fn spawn(mut commands: Commands) {
     commands.spawn((
-        Position::new(1.5, 6.6, 1.5),
+        Position::new(2.0, 2.0, 1.0),
         Velocity::new(),
         Rotation::new(),
         BoundingBox::new(0.15, 0.1),

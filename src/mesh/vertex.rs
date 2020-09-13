@@ -1,10 +1,15 @@
-use gl::types::*;
 use std::ffi;
+
+use gl::types::*;
+use vek::{Mat4, Vec4};
+
 #[derive(Debug)]
 pub struct VertexData {
     data: Vec<f32>,
     indices: Option<Vec<u32>>,
     texture: Option<Vec<f32>>,
+    pub instanced: Option<Vec<Mat4<f32>>>,
+    instance_vbo: u32,
 }
 
 impl VertexData {
@@ -12,6 +17,7 @@ impl VertexData {
         vertices: Vec<f32>,
         texture: Option<Vec<f32>>,
         indices: Option<Vec<u32>>,
+        instanced: Option<Vec<Mat4<f32>>>,
     ) -> VertexData {
         let data = vertices.chunks_exact(3).enumerate().fold(
             Vec::new(),
@@ -30,11 +36,17 @@ impl VertexData {
             data,
             indices,
             texture,
+            instanced,
+            instance_vbo: 0,
         }
     }
 
     pub fn has_indices(&self) -> bool {
         self.indices.is_some()
+    }
+
+    pub fn is_instanced(&self) -> bool {
+        self.instanced.is_some()
     }
 
     pub fn indices_count(&self) -> i32 {
@@ -52,12 +64,29 @@ impl VertexData {
             as GLsizeiptr
     }
 
+    pub fn instance_size(&self) -> GLsizeiptr {
+        (self.instance_len() as usize *
+            std::mem::size_of::<Mat4<f32>>())
+            as GLsizeiptr
+    }
+
+    pub fn instance_len(&self) -> GLsizei {
+        self.instanced.as_ref().unwrap().len() as i32
+    }
+
     pub fn as_ptr(&self) -> *const ffi::c_void {
         self.data.as_ptr() as *const _
     }
 
     pub fn indices_ptr(&self) -> *const ffi::c_void {
         self.indices.as_ref().unwrap().as_ptr() as *const _
+    }
+
+    pub fn instance_ptr(&self) -> *const ffi::c_void {
+        self.instanced.as_ref().unwrap()[0].as_col_ptr()
+            as *const _
+        // self.instanced.as_ref().unwrap()[0] as *const
+        // Mat4<f32> as *const _
     }
 
     pub fn vertices_count(&self) -> i32 {
@@ -94,7 +123,34 @@ impl VertexData {
         (3 * std::mem::size_of::<GLfloat>()) as *const _
     }
 
-    pub fn setup_buffers(&self) -> u32 {
+    pub fn set_instance_data(
+        &mut self,
+        index: usize,
+        offset: Mat4<f32>,
+    ) {
+        let vec = self.instanced.as_mut().unwrap();
+        if index >= vec.len() {
+            println!("resizin');");
+            vec.resize(index + 50, offset);
+        }
+        vec[index] = offset;
+    }
+
+    pub fn setup_instance_buffer(&mut self) {
+        unsafe {
+            gl::BindBuffer(
+                gl::ARRAY_BUFFER,
+                self.instance_vbo,
+            );
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                self.instance_size(),
+                self.instance_ptr(),
+                gl::STATIC_DRAW,
+            );
+        }
+    }
+    pub fn setup_buffers(&mut self) -> u32 {
         unsafe {
             let mut vao = 0;
 
@@ -122,6 +178,13 @@ impl VertexData {
                     self.indices_ptr(),
                     gl::STATIC_DRAW,
                 );
+            }
+
+            if let Some(_) = self.instanced {
+                gl::GenBuffers(1, &mut self.instance_vbo);
+                self.setup_instance_buffer();
+                self.setup_instance_attribute();
+                gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
             }
 
             self.setup_position_attribute();
@@ -161,6 +224,59 @@ impl VertexData {
             );
 
             gl::EnableVertexAttribArray(1);
+        }
+    }
+
+    pub fn setup_instance_attribute(&self) {
+        unsafe {
+            let size_mat =
+                std::mem::size_of::<Mat4<f32>>() as i32;
+            let size_vec =
+                std::mem::size_of::<Vec4<f32>>() as i32;
+            gl::VertexAttribPointer(
+                3,
+                4,
+                gl::FLOAT,
+                gl::FALSE,
+                size_mat,
+                0 as *const _,
+            );
+
+            gl::VertexAttribPointer(
+                4,
+                4,
+                gl::FLOAT,
+                gl::FALSE,
+                size_mat,
+                size_vec as *const _,
+            );
+
+            gl::VertexAttribPointer(
+                5,
+                4,
+                gl::FLOAT,
+                gl::FALSE,
+                size_mat,
+                (2 * size_vec) as *const _,
+            );
+
+            gl::VertexAttribPointer(
+                6,
+                4,
+                gl::FLOAT,
+                gl::FALSE,
+                size_mat,
+                (3 * size_vec) as *const _,
+            );
+
+            gl::EnableVertexAttribArray(3);
+            gl::EnableVertexAttribArray(4);
+            gl::EnableVertexAttribArray(5);
+            gl::EnableVertexAttribArray(6);
+            gl::VertexAttribDivisor(3, 1);
+            gl::VertexAttribDivisor(4, 1);
+            gl::VertexAttribDivisor(5, 1);
+            gl::VertexAttribDivisor(6, 1);
         }
     }
 }

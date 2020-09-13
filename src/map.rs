@@ -148,6 +148,7 @@ impl Area {
                         };
                         if aabb.collides_with_aabb(block_aabb)
                         {
+                            println!("and collides");
                             return Some((
                                 block_aabb,
                                 aabb,

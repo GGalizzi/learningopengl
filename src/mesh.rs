@@ -1,4 +1,5 @@
 use gl;
+use vek::{Mat4, Vec3};
 
 mod constant;
 mod vertex;
@@ -9,6 +10,7 @@ pub struct MeshBuilder {
     vertices: Vec<f32>,
     indices: Option<Vec<u32>>,
     texture: Option<Vec<f32>>,
+    instanced: Option<Vec<Mat4<f32>>>,
 }
 
 impl MeshBuilder {
@@ -17,6 +19,7 @@ impl MeshBuilder {
             vertices: Vec::new(),
             texture: None,
             indices: None,
+            instanced: None,
         }
     }
 
@@ -40,11 +43,19 @@ impl MeshBuilder {
         self
     }
 
+    pub fn instanced(mut self) -> MeshBuilder {
+        let mut v = Vec::with_capacity(80);
+        v.push(Mat4::identity());
+        self.instanced = Some(v);
+        self
+    }
+
     pub fn finalize(self) -> Mesh {
         let verts = VertexData::new(
             self.vertices,
             self.texture,
             self.indices,
+            self.instanced,
         );
 
         Mesh::new(verts)
@@ -53,13 +64,18 @@ impl MeshBuilder {
 pub struct Mesh {
     vertex_data: VertexData,
     vao: u32,
+    instance_index: usize,
 }
 
 impl Mesh {
-    pub fn new(vertex_data: VertexData) -> Mesh {
+    pub fn new(mut vertex_data: VertexData) -> Mesh {
         let vao = vertex_data.setup_buffers();
 
-        Mesh { vertex_data, vao }
+        Mesh {
+            vertex_data,
+            vao,
+            instance_index: 0,
+        }
     }
 
     pub fn build() -> MeshBuilder {
@@ -72,22 +88,52 @@ impl Mesh {
         }
     }
 
+    pub fn instance_reset(&mut self) {
+        self.instance_index = 0;
+    }
+
+    pub fn next_instance(&mut self, offset: Mat4<f32>) {
+        self.vertex_data
+            .set_instance_data(self.instance_index, offset);
+        self.instance_index += 1;
+    }
+
+    pub fn bind_instance_data(&mut self) {
+        self.bind_buffer();
+        self.vertex_data.setup_instance_buffer();
+    }
+
     pub fn draw(&self) {
         self.bind_buffer();
         unsafe {
             if self.vertex_data.has_indices() {
-                gl::DrawElements(
-                    gl::TRIANGLES,
-                    self.vertex_data.indices_count(),
-                    gl::UNSIGNED_INT,
-                    0 as *const _,
-                )
+                if self.vertex_data.is_instanced() {
+                    unimplemented!("instanced DrawElements");
+                } else {
+                    gl::DrawElements(
+                        gl::TRIANGLES,
+                        self.vertex_data.indices_count(),
+                        gl::UNSIGNED_INT,
+                        0 as *const _,
+                    )
+                }
             } else {
-                gl::DrawArrays(
-                    gl::TRIANGLES,
-                    0,
-                    self.vertex_data.vertices_count(),
-                );
+                if self.vertex_data.is_instanced() {
+                    // println!("should draw {:?}",
+                    // self.vertex_data.instanced);
+                    gl::DrawArraysInstanced(
+                        gl::TRIANGLES,
+                        0,
+                        self.vertex_data.vertices_count(),
+                        self.vertex_data.instance_len(),
+                    );
+                } else {
+                    gl::DrawArrays(
+                        gl::TRIANGLES,
+                        0,
+                        self.vertex_data.vertices_count(),
+                    );
+                }
             }
         }
     }
