@@ -27,5 +27,7 @@ pub fn load_gl(video: &sdl2::VideoSubsystem) {
         );
 
         raw::Enable(gl::DEPTH_TEST);
+        raw::Enable(gl::CULL_FACE);
+        raw::FrontFace(gl::CW);
     }
 }

@@ -130,7 +130,6 @@ impl VertexData {
     ) {
         let vec = self.instanced.as_mut().unwrap();
         if index >= vec.len() {
-            println!("resizin');");
             vec.resize(index + 50, offset);
         }
         vec[index] = offset;
@@ -149,6 +148,7 @@ impl VertexData {
                 gl::STATIC_DRAW,
             );
         }
+        self.setup_instance_attribute();
     }
     pub fn setup_buffers(&mut self) -> u32 {
         unsafe {
@@ -183,7 +183,6 @@ impl VertexData {
             if let Some(_) = self.instanced {
                 gl::GenBuffers(1, &mut self.instance_vbo);
                 self.setup_instance_buffer();
-                self.setup_instance_attribute();
                 gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
             }
 

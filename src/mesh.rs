@@ -25,7 +25,6 @@ impl MeshBuilder {
 
     pub fn cube(self) -> MeshBuilder {
         self.verts(&constant::CUBE_VERTICES)
-            .texture_map(&constant::CUBE_TEXTURE_MAPPING)
     }
 
     pub fn verts(mut self, verts: &[f32]) -> MeshBuilder {

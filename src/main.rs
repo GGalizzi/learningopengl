@@ -259,27 +259,33 @@ fn main() -> Result<()> {
         }*/
 
         cube.instance_reset();
-        for y in 0..4 {
-            for x in 0..20 {
-                for z in 0..8 {
-                    if area
-                        .blocks_at(Vec3::new(x, y, z))
-                        .is_some()
+        
+                        let mut instances = 0;
+        for y in 0..area.height {
+            for x in 0..area.width {
+                for z in 0..area.depth {
+                    if area.tiles
+                        [y][area.width * z + x]
+                        .is_wall()
                     {
                         let model =
                             Mat4::translation_3d(Vec3::new(
-                                x as f32, y as f32, z as f32,
+                                x as f32 * 0.1,
+                                y as f32 * 0.1,
+                                z as f32 * 0.1,
                             ));
                         cube.next_instance(model);
+                        instances += 1;
                     }
                 }
             }
         }
+        
+        println!("instances {:?}", instances);
 
         cube.bind_instance_data();
         Draw::with(&program)
             .with_matrix("mvp", &mv)
-            .with_texture_n(&wall_texture, 0)
             .mesh(&cube);
 
         window.gl_swap_window();

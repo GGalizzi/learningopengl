@@ -47,7 +47,7 @@ impl Plugin for GamePlugin {
 
 fn spawn(mut commands: Commands) {
     commands.spawn((
-        Position::new(2.0, 2.0, 1.0),
+        Position::new(0.0, -1.0, 0.0),
         Velocity::new(),
         Rotation::new(),
         BoundingBox::new(0.15, 0.1),
@@ -145,7 +145,8 @@ fn movement(
                 }
             });
 
-            if (dir.x.abs() > 0.0 || dir.z.abs() > 0.0) &&
+            if (false && dir.x.abs() > 0.0 ||
+                dir.z.abs() > 0.0) &&
                 pen.y.abs() < 0.25
             {
                 dir = Vec3::new(-dir.x, 0.0, -dir.z);
