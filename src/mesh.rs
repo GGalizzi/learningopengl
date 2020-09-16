@@ -136,4 +136,16 @@ impl Mesh {
             }
         }
     }
+    
+    pub fn draw_instanced(&self, count: i32) {
+        self.bind_buffer();
+        unsafe {
+            gl::DrawArraysInstanced(
+                gl::TRIANGLES,
+                0,
+                self.vertex_data.vertices_count(),
+                count,
+            );
+        }
+    }
 }

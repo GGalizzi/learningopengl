@@ -5,6 +5,7 @@ use gl;
 use sdl2::{self, event::Event};
 use vek::{Mat4, Vec3};
 
+mod frustum;
 mod component;
 mod draw;
 mod init;
@@ -130,7 +131,7 @@ fn main() -> Result<()> {
     );
     */
 
-    let projection = Mat4::perspective_fov_rh_no(
+    let projection = Mat4::perspective_fov_rh_zo(
         45f32.to_radians(),
         WINDOW_WIDTH,
         WINDOW_HEIGHT,
@@ -168,6 +169,7 @@ fn main() -> Result<()> {
                             Some(sdl2::keyboard::Keycode::Escape),
                         ..
                     } => break 'running,
+
                     Event::KeyDown {
                         keycode: Some(keycode),
                         ..
@@ -193,6 +195,7 @@ fn main() -> Result<()> {
         bevy.update();
 
         let mut view = Mat4::identity();
+        let mut frustum;
 
         for (pos, dir) in bevy
             .world
@@ -212,6 +215,7 @@ fn main() -> Result<()> {
         }
 
         let mv = projection * view;
+        frustum = frustum::Frustum::from_modelview_projection(mv.as_col_slice());
         let mvp = projection * view * model;
         /*
         let d = Draw::with(&program)
@@ -268,11 +272,15 @@ fn main() -> Result<()> {
                         [y][area.width * z + x]
                         .is_wall()
                     {
+                        let x = x as f32 * 0.1;
+                        let y = y as f32 * 0.1;
+                        let z = z as f32 * 0.1;
+                        if !frustum.point_intersecting(x, y, z) { continue; }
                         let model =
                             Mat4::translation_3d(Vec3::new(
-                                x as f32 * 0.1,
-                                y as f32 * 0.1,
-                                z as f32 * 0.1,
+                                x,
+                                y,
+                                z,
                             ));
                         cube.next_instance(model);
                         instances += 1;
@@ -281,12 +289,10 @@ fn main() -> Result<()> {
             }
         }
         
-        println!("instances {:?}", instances);
-
         cube.bind_instance_data();
         Draw::with(&program)
             .with_matrix("mvp", &mv)
-            .mesh(&cube);
+            .instanced_mesh(&cube, instances);
 
         window.gl_swap_window();
     }

@@ -73,6 +73,11 @@ impl<'a> Draw<'a> {
         mesh.draw();
         self
     }
+    
+    pub fn instanced_mesh(self, mesh: &Mesh, count: i32) -> Draw<'a> {
+        mesh.draw_instanced(count);
+        self
+    }
 
     pub fn with_texture_n(
         self,
