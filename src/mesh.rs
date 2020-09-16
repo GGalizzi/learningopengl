@@ -10,6 +10,7 @@ pub struct MeshBuilder {
     vertices: Vec<f32>,
     indices: Option<Vec<u32>>,
     texture: Option<Vec<f32>>,
+    normals: Option<Vec<f32>>,
     instanced: Option<Vec<Mat4<f32>>>,
 }
 
@@ -19,6 +20,7 @@ impl MeshBuilder {
             vertices: Vec::new(),
             texture: None,
             indices: None,
+            normals: None,
             instanced: None,
         }
     }
@@ -41,6 +43,11 @@ impl MeshBuilder {
         self.texture = Some(map.to_owned());
         self
     }
+    
+    pub fn normals(mut self, normals: &[f32]) -> MeshBuilder {
+        self.normals = Some(normals.to_owned());
+        self
+    }
 
     pub fn instanced(mut self) -> MeshBuilder {
         let mut v = Vec::with_capacity(80);
@@ -52,8 +59,9 @@ impl MeshBuilder {
     pub fn finalize(self) -> Mesh {
         let verts = VertexData::new(
             self.vertices,
-            self.texture,
             self.indices,
+            self.texture,
+            self.normals,
             self.instanced,
         );
 

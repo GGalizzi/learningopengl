@@ -5,7 +5,7 @@ layout (location = 3) in mat4 aOffset;
 
 uniform mat4 mvp;
 
-flat out vec4 colorAdd;
+out vec4 colorAdd;
 
 void main()
 {

@@ -8,6 +8,7 @@ pub struct VertexData {
     data: Vec<f32>,
     indices: Option<Vec<u32>>,
     texture: Option<Vec<f32>>,
+    normals: Option<Vec<f32>>,
     pub instanced: Option<Vec<Mat4<f32>>>,
     instance_vbo: u32,
 }
@@ -15,8 +16,9 @@ pub struct VertexData {
 impl VertexData {
     pub fn new(
         vertices: Vec<f32>,
-        texture: Option<Vec<f32>>,
         indices: Option<Vec<u32>>,
+        texture: Option<Vec<f32>>,
+        normals: Option<Vec<f32>>,
         instanced: Option<Vec<Mat4<f32>>>,
     ) -> VertexData {
         let data = vertices.chunks_exact(3).enumerate().fold(
@@ -25,9 +27,15 @@ impl VertexData {
                 acc.push(vert[0]);
                 acc.push(vert[1]);
                 acc.push(vert[2]);
+                
                 if let Some(texture) = texture.as_ref() {
                     acc.push(texture[i * 2]);
                     acc.push(texture[i * 2 + 1]);
+                }
+                if let Some(normal) = normals.as_ref() {
+                    acc.push(normal[i * 3]);
+                    acc.push(normal[i * 3 + 1]);
+                    acc.push(normal[i * 3 + 2]);
                 }
                 acc
             },
@@ -36,6 +44,7 @@ impl VertexData {
             data,
             indices,
             texture,
+            normals,
             instanced,
             instance_vbo: 0,
         }
@@ -106,6 +115,11 @@ impl VertexData {
         if self.texture.is_some() {
             elements_per_vertex += 2;
         }
+
+        if self.normals.is_some() {
+            elements_per_vertex += 3;
+        }
+
         elements_per_vertex
     }
 
@@ -121,6 +135,16 @@ impl VertexData {
 
     pub fn texture_offset(&self) -> *const ffi::c_void {
         (3 * std::mem::size_of::<GLfloat>()) as *const _
+    }
+
+    pub fn normals_offset(&self) -> *const ffi::c_void {
+        let offset = if self.texture.is_some() {
+            5
+        } else {
+            3
+        };
+
+        (offset * std::mem::size_of::<GLfloat>()) as *const _
     }
 
     pub fn set_instance_data(
@@ -187,7 +211,14 @@ impl VertexData {
             }
 
             self.setup_position_attribute();
-            self.setup_texture_attribute();
+            
+            if let Some(ref _textures) = self.texture {
+                self.setup_texture_attribute();
+            }
+
+            if let Some(ref _normals) = self.normals {
+                self.setup_normal_attribute();
+            }
 
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
@@ -208,6 +239,21 @@ impl VertexData {
             );
 
             gl::EnableVertexAttribArray(0);
+        }
+    }
+    
+    pub fn setup_normal_attribute(&self) {
+        unsafe {
+            gl::VertexAttribPointer(
+                1,
+                3,
+                gl::FLOAT,
+                gl::FALSE,
+                self.stride(),
+                self.normals_offset(),
+            );
+
+            gl::EnableVertexAttribArray(1);
         }
     }
 

@@ -1130,6 +1130,7 @@ dependencies = [
  "bevy",
  "gl",
  "image",
+ "rand",
  "sdl2",
  "vek",
 ]

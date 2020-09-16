@@ -40,10 +40,22 @@ impl ShaderProgram {
                 &mut success,
             );
 
+            let mut info_log = Vec::with_capacity(512);
+            info_log.set_len(512 - 1);
+
             if success != 1 {
-                return Err(
-                    "Failed to link program.".to_string()
+                gl::GetProgramInfoLog(
+                    program,
+                    512,
+                    std::ptr::null_mut(),
+                    info_log.as_mut_ptr() as *mut GLchar,
                 );
+                return Err(format!(
+                    "Failed to link program. {:?}, {:?}, {:?}",
+                    gl::GetError(),
+                    success,
+                    std::str::from_utf8(&info_log).unwrap()
+                ));
             }
 
             gl::DeleteShader(vertex_shader);
