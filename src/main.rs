@@ -5,9 +5,10 @@ use gl;
 use sdl2::{self, event::Event};
 use vek::{Mat4, Vec3};
 
-mod frustum;
+mod chunk;
 mod component;
 mod draw;
+mod frustum;
 mod init;
 mod input;
 mod map;
@@ -69,6 +70,11 @@ fn main() -> Result<()> {
         &mut bevy.resources,
     );
 
+    let instanced = ShaderProgram::new(
+        "shaders/instanced.vert",
+        "shaders/basic.frag",
+    )?;
+
     let program = ShaderProgram::new(
         "shaders/base.vert",
         "shaders/basic.frag",
@@ -114,6 +120,9 @@ fn main() -> Result<()> {
 
     let floor_texture =
         Texture::new("assets/stone_floor_c.png");
+
+    let mut chunk = chunk::Chunk::new();
+    chunk.generate();
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -215,7 +224,9 @@ fn main() -> Result<()> {
         }
 
         let mv = projection * view;
-        frustum = frustum::Frustum::from_modelview_projection(mv.as_col_slice());
+        frustum = frustum::Frustum::from_modelview_projection(
+            mv.as_col_slice(),
+        );
         let mvp = projection * view * model;
         /*
         let d = Draw::with(&program)
@@ -262,37 +273,43 @@ fn main() -> Result<()> {
             }
         }*/
 
+
+        /*
         cube.instance_reset();
-        
-                        let mut instances = 0;
+        let mut instances = 0;
         for y in 0..area.height {
             for x in 0..area.width {
                 for z in 0..area.depth {
-                    if area.tiles
-                        [y][area.width * z + x]
+                    if area.tiles[y][area.width * z + x]
                         .is_wall()
                     {
                         let x = x as f32 * 0.1;
                         let y = y as f32 * 0.1;
                         let z = z as f32 * 0.1;
-                        if !frustum.point_intersecting(x, y, z) { continue; }
-                        let model =
-                            Mat4::translation_3d(Vec3::new(
-                                x,
-                                y,
-                                z,
-                            ));
+                        if !frustum
+                            .point_intersecting(x, y, z)
+                        {
+                            continue;
+                        }
+                        let model = Mat4::translation_3d(
+                            Vec3::new(x, y, z),
+                        );
                         cube.next_instance(model);
                         instances += 1;
                     }
                 }
             }
-        }
-        
+        }*/
+
+        Draw::with(&program)
+            .with_matrix("mvp", &mvp)
+            .mesh(chunk.get_mesh());
+        /*
         cube.bind_instance_data();
         Draw::with(&program)
             .with_matrix("mvp", &mv)
             .instanced_mesh(&cube, instances);
+            */
 
         window.gl_swap_window();
     }
