@@ -4,7 +4,7 @@ use vek::Vec3;
 
 use crate::mesh::Mesh;
 
-const CHUNK_SIZE: usize = 36;
+const CHUNK_SIZE: usize = 86;
 const VOXEL_SIZE: f32 = 0.1;
 
 struct VertNormal(Vec<f32>, Vec<f32>);
@@ -49,8 +49,8 @@ impl Chunk {
             for z in 0..CHUNK_SIZE {
                 for x in 0..CHUNK_SIZE {
                     let mut rng = rand::thread_rng();
-                    let n: u32 = rng.gen_range(0, 10);
-                    if n < 8 {
+                    let n: u32 = rng.gen_range(0, 100);
+                    if n < 99 {
                         voxels.push(Voxel::Air);
                         continue;
                     }

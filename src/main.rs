@@ -303,6 +303,7 @@ fn main() -> Result<()> {
 
         Draw::with(&program)
             .with_matrix("mvp", &mvp)
+            .with_matrix("model", &model)
             .mesh(chunk.get_mesh());
         /*
         cube.bind_instance_data();
