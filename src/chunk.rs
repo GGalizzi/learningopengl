@@ -4,8 +4,8 @@ use vek::Vec3;
 
 use crate::mesh::Mesh;
 
-const CHUNK_SIZE: usize = 86;
-const VOXEL_SIZE: f32 = 0.1;
+pub const CHUNK_SIZE: usize = 64;
+pub const VOXEL_SIZE: f32 = 0.1;
 
 struct VertNormal(Vec<f32>, Vec<f32>);
 
@@ -20,6 +20,7 @@ impl VertNormal {
     }
 }
 
+#[derive(Copy, Clone)]
 enum Voxel {
     Air,
     Ground,
@@ -60,6 +61,28 @@ impl Chunk {
         }
 
         Chunk { mesh: None, voxels }
+    }
+
+    pub fn empty() -> Chunk {
+        let mut voxels = Vec::with_capacity(
+            CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE,
+        );
+
+        voxels.resize(
+            CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE,
+            Voxel::Air,
+        );
+
+        Chunk { mesh: None, voxels }
+    }
+
+    pub fn set_ground(
+        &mut self,
+        Vec3 { x, y, z }: Vec3<usize>,
+    ) {
+        self.voxels[(z as usize * CHUNK_SIZE + x as usize) +
+            y as usize * CHUNK_SIZE * CHUNK_SIZE] =
+            Voxel::Ground;
     }
 
     pub fn generate(&mut self) {

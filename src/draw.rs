@@ -1,6 +1,6 @@
 use std::ffi;
 
-use vek::Mat4;
+use vek::{Mat4, Vec3};
 
 use crate::{
     mesh::Mesh, shader::ShaderProgram, texture::Texture,
@@ -55,6 +55,24 @@ impl<'a> Draw<'a> {
         self
     }
 
+    pub fn with_vec3(
+        self,
+        uniform: &str,
+        vec: Vec3<f32>,
+    ) -> Draw<'a> {
+        let loc = self.get_uniform_location(uniform);
+
+        unsafe {
+            gl::Uniform3fv(
+                loc,
+                1,
+                vec.as_ptr(),
+            );
+        }
+
+        self
+    }
+
     pub fn with_bool(
         self,
         uniform: &str,
@@ -73,8 +91,12 @@ impl<'a> Draw<'a> {
         mesh.draw();
         self
     }
-    
-    pub fn instanced_mesh(self, mesh: &Mesh, count: i32) -> Draw<'a> {
+
+    pub fn instanced_mesh(
+        self,
+        mesh: &Mesh,
+        count: i32,
+    ) -> Draw<'a> {
         mesh.draw_instanced(count);
         self
     }

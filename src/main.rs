@@ -17,6 +17,7 @@ mod plugin;
 mod shader;
 mod texture;
 mod util;
+mod area;
 
 use draw::Draw;
 use input::Input;
@@ -157,6 +158,7 @@ fn main() -> Result<()> {
     */
 
     let area = map::Area::debug();
+    let world = crate::area::World::from_area(area);
     'running: loop {
         unsafe {
             gl::ClearColor(0.005, 0.0, 0.15, 1.0);
@@ -301,10 +303,16 @@ fn main() -> Result<()> {
             }
         }*/
 
-        Draw::with(&program)
-            .with_matrix("mvp", &mvp)
-            .with_matrix("model", &model)
-            .mesh(chunk.get_mesh());
+        for (pos, chunk) in world.chunks.iter() {
+            let pos = pos.as_() * chunk::CHUNK_SIZE as f32 * chunk::VOXEL_SIZE;
+            let model = Mat4::translation_3d(pos);
+            Draw::with(&program)
+                .with_matrix("mvp", &(mv * model))
+                .with_matrix("model", &model)
+                .with_vec3("chunkColor", util::nznormalize(pos.as_()))
+                .mesh(chunk.get_mesh());
+        }
+
         /*
         cube.bind_instance_data();
         Draw::with(&program)
