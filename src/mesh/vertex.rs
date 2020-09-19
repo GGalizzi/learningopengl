@@ -125,10 +125,6 @@ impl VertexData {
 
     pub fn stride(&self) -> GLsizei {
         let elements_per_vertex = self.elements_per_vertex();
-        println!(
-            "stride: {:?} * sizeof(float)",
-            elements_per_vertex
-        );
         elements_per_vertex *
             std::mem::size_of::<GLfloat>() as GLsizei
     }

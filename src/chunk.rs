@@ -64,13 +64,8 @@ impl Chunk {
     }
 
     pub fn empty() -> Chunk {
-        let mut voxels = Vec::with_capacity(
+        let voxels = Vec::with_capacity(
             CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE,
-        );
-
-        voxels.resize(
-            CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE,
-            Voxel::Air,
         );
 
         Chunk { mesh: None, voxels }
@@ -80,9 +75,13 @@ impl Chunk {
         &mut self,
         Vec3 { x, y, z }: Vec3<usize>,
     ) {
-        self.voxels[(z as usize * CHUNK_SIZE + x as usize) +
-            y as usize * CHUNK_SIZE * CHUNK_SIZE] =
-            Voxel::Ground;
+        let idx = (z as usize * CHUNK_SIZE + x as usize) +
+            y as usize * CHUNK_SIZE * CHUNK_SIZE;
+
+        if idx >= self.voxels.len() {
+            self.voxels.resize(idx+1, Voxel::Air);
+        }
+        self.voxels[idx] = Voxel::Ground;
     }
 
     pub fn generate(&mut self) {
